@@ -38,42 +38,70 @@ STOCKFISH_PATH = _find_stockfish()
 CP_MATE = 100_000
 
 
+import threading
+
 class StockfishEngine:
     def __init__(self, path: str = STOCKFISH_PATH, depth: int = 14,
                  threads: int = 2, hash_mb: int = 128):
         self.path = path
         self.depth = depth
+        self.threads = threads
+        self.hash_mb = hash_mb
+        self.lock = threading.Lock()
+        self._start_engine()
+
+    def _start_engine(self):
         try:
             self.engine = chess.engine.SimpleEngine.popen_uci(self.path)
+            self.engine.configure({"Threads": self.threads, "Hash": self.hash_mb})
         except FileNotFoundError as e:
             raise RuntimeError(
                 f"Could not find Stockfish binary at '{self.path}'. "
                 f"Install Stockfish and/or set the STOCKFISH_PATH env var."
             ) from e
-        self.engine.configure({"Threads": threads, "Hash": hash_mb})
+
+    def _safe_analyse(self, board: chess.Board, limit: chess.engine.Limit, multipv: Optional[int] = None):
+        """Thread-safe engine analysis with automatic process recovery."""
+        with self.lock:
+            try:
+                if multipv:
+                    return self.engine.analyse(board, limit, multipv=multipv)
+                return self.engine.analyse(board, limit)
+            except Exception as e:
+                try:
+                    self.engine.quit()
+                except Exception:
+                    pass
+                self._start_engine()
+                if multipv:
+                    return self.engine.analyse(board, limit, multipv=multipv)
+                return self.engine.analyse(board, limit)
 
     def close(self):
-        self.engine.quit()
+        with self.lock:
+            try:
+                self.engine.quit()
+            except Exception:
+                pass
 
     def best_moves(self, board: chess.Board, n: int = 3, depth: Optional[int] = None) -> List[dict]:
         """Top-N candidate moves with evaluation, from the mover's perspective."""
         limit = chess.engine.Limit(depth=depth or self.depth)
-        infos = self.engine.analyse(
-            board,
-            limit,
-            multipv=min(n, board.legal_moves.count()) or 1,
-        )
+        multipv = min(n, board.legal_moves.count()) or 1
+        infos = self._safe_analyse(board, limit, multipv=multipv)
         if isinstance(infos, dict):
             infos = [infos]
 
         results = []
         for info in infos:
+            if not isinstance(info, dict) or "score" not in info:
+                continue
             pv = info.get("pv", [])
             move = pv[0] if pv else None
             score = info["score"].pov(board.turn)
             results.append({
                 "move": move.uci() if move else None,
-                "san": board.san(move) if move else None,
+                "san": board.san(move) if move and move in board.legal_moves else (move.uci() if move else None),
                 "score_cp": score.score(mate_score=CP_MATE),
                 "is_mate": score.is_mate(),
                 "mate_in": score.mate() if score.is_mate() else None,
@@ -87,7 +115,8 @@ class StockfishEngine:
         who just moved (so we can compare it directly to their pre-move best score)."""
         new_board = board.copy()
         new_board.push(move)
-        info = self.engine.analyse(new_board, chess.engine.Limit(depth=depth or self.depth))
+        limit = chess.engine.Limit(depth=depth or self.depth)
+        info = self._safe_analyse(new_board, limit)
         return info["score"].pov(board.turn)
 
     def threat_preview(self, board: chess.Board, move: chess.Move,
@@ -96,7 +125,8 @@ class StockfishEngine:
         this is the 'here's how you could get punished' preview."""
         new_board = board.copy()
         new_board.push(move)
-        info = self.engine.analyse(new_board, chess.engine.Limit(depth=depth or self.depth))
+        limit = chess.engine.Limit(depth=depth or self.depth)
+        info = self._safe_analyse(new_board, limit)
         pv = info.get("pv", [])
         reply = pv[0] if pv else None
         score = info["score"].pov(board.turn)  # from original mover's perspective
