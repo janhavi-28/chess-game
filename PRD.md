@@ -58,13 +58,13 @@ Every move played by the user is evaluated against Stockfish thresholds and labe
 - **Red Move Square Highlight**: When a move is classified as an *Inaccuracy*, *Mistake*, *Blunder*, or *Miss*, the destination square of the move is highlighted in **solid red** on the board.
 
 ### 3.5 Pre-Commit Approval & Move Controls
-- **Good / Best / Book Moves**: Commit immediately, updating the board FEN and triggering the opponent response seamlessly.
+- **Good / Best / Book Moves**: Commit immediately, updating the board FEN, speaking positive coach feedback, and playing move/capture sounds.
 - **Inaccurate / Mistake / Blunder Moves**: Pause in an **`Action Pending`** state with a red square highlight until the user decides.
-- **Move Controls (3 Permanent Buttons)**:
-  1. 💡 **Hint Box**: Displays recommended top Stockfish alternative moves (e.g. *White Knight to f3 [+1.2]*). Clicking any recommendation auto-plays it.
+- **Move Controls (3 Standardized Buttons)**:
+  1. 💡 **Hint Box (Puzzle Hint Mode)**: Delivers step-by-step puzzle riddle clues (Riddle Clue, Piece Clue, Target Square Clue) with an interactive **"Reveal Solution 🔓"** button so hints challenge the player instead of spoiling the move immediately.
   2. ▶️ **Play Anyway**: Finalizes the pending move, commits to the backend engine, and triggers opponent response.
-  3. **Show Follow Up Moves**: Displays both the opponent's strongest reply threat (e.g. *They can play Black Queen to d4*) AND clickable better move recommendations.
-- **Top Header Undo Button**: **`Undo Move`** (located in the top bar beside Learner Mode) executes a full-stack rollback (frontend + backend engine stack) to retry your move.
+  3. 🛡️ **Show Follow Up Moves**: Displays opening strategic guidance (*"Try building your center first."* for moves 1–5), opponent reply threats with plain-English explanations (e.g. *They can play Nf6 — Knight jumps to f6*), and clickable engine suggestions.
+- **Top Header Undo Button**: **`Undo Move`** (located in top bar) executes a full-stack rollback to retry your move.
 
 ### 3.6 Formatted Move Log
 - **Human-Readable Moves**: Displays move history translated into verbose English with side colors (e.g. `1. White Pawn to e4 [BOOK] Black Pawn to d5 [BOOK]`).
@@ -73,23 +73,27 @@ Every move played by the user is evaluated against Stockfish thresholds and labe
 - **Learner Mode: ON**: Displays visual engine recommendation arrows on the board.
 - **Learner Mode: OFF**: Completely disables all board arrows for clean, competitive play.
 
+### 3.8 Audio & Voice Features
+- 🔊 **Classic Wooden Chess Sound Effects**: Powered by Web Audio API synthesizers (`chessSounds.playMove()`, `chessSounds.playCapture()`) for crisp piece placement and wooden captures.
+- 🎙️ **Coach Voice Narration**: Uses Web Speech API Text-to-Speech (`speakCoachMessage()`) to speak feedback out loud (e.g. *"Best move. Keep going."*, *"Watch your move — try building your center first."*).
+
 ---
 
 ## 4. User Experience & Interaction Flow
 
 ```mermaid
 flowchart TD
-    A[User Drags or Clicks Piece to Move] --> B[Run Stockfish Precheck Analysis]
-    B --> C[Coach Panel Displays: User - Classification]
+    A[User Drags or Clicks Piece to Move] --> B[Play Piece Movement Sound & Run Stockfish Precheck Analysis]
+    B --> C[Coach Overlay & Voice Speak: Coach Feedback]
     
     C --> D{Is Move Good or Bad?}
-    D -- Good / Best / Book --> E[Commit Move Immediately & Trigger Opponent Engine]
+    D -- Good / Best / Book --> E[Commit Move & Trigger Opponent Engine]
     D -- Inaccuracy / Mistake / Blunder --> F[Highlight Target Square in RED & Enter Action Pending State]
     
     F --> G{User Action}
     G -- Click Header Undo Move --> H[Rollback Frontend & Backend Engine Stack]
-    G -- Click Hint Box --> I[Display Top Stockfish Recommendations]
-    G -- Click Show Follow Up Moves --> J[Display Opponent Threat & Better Suggestions]
+    G -- Click Hint Box --> I[Launch Puzzle Hint Mode with Step-by-Step Clues & Solution Reveal]
+    G -- Click Show Follow Up Moves --> J[Display Opening Guidance, Opponent Threat & Suggestions]
     G -- Click Play Anyway --> K[Commit Pending Move & Trigger Opponent Engine]
 ```
 
@@ -105,6 +109,7 @@ flowchart TD
   - Styling: **Tailwind CSS** (Dark Mode Theme) + Vanilla CSS Overrides
   - Chess Board Render: **`react-chessboard`**
   - Game Logic Utilities: **`chess.js`**
+  - Audio & Voice: **Web Audio API Synthesizer** + **Web Speech API TTS**
   - Icons: **Lucide React**
 
 - **Backend**:

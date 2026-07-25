@@ -27,17 +27,20 @@ The frontend is a single-page application built using Vite, styled with Tailwind
 ```mermaid
 graph TD
     App[App.tsx - Master State, Header Bar & Control Loop] --> Board[ChessBoardArea.tsx - Max-Sized Board & Red Highlight]
-    App --> Coach[CoachPanel.tsx - Feedback & 3-Button Controls]
+    App --> Overlay[CoachOverlay.tsx - Pre-Commit Approval Card & Puzzle Hint Mode]
+    App --> Coach[CoachPanel.tsx - Side Feedback & 3-Button Controls]
     App --> Speech[SpeechBubble.tsx - User Rating Card]
     App --> Log[MoveLog.tsx - Verbose Move History]
-    App --> Translator[chessTranslator.ts - SAN to English]
-    App --> Service[services/api.ts - Axios/Fetch REST Client]
+    App --> Translator[chessTranslator.ts - SAN to English & Turn Perspective]
+    App --> Sound[soundEffects.ts - Web Audio API Sounds & Web Speech API TTS]
+    App --> Service[services/api.ts - REST Client]
 ```
 
-- **`App.tsx`**: Manages master game state (`gameId`, `fen`, `playerColor`, `warningActive`, `history`). Renders the top navigation bar (`You Vs Robot`, `Side Selection`, `Restart Game`, `Learner Mode: ON/OFF`, `Undo Move`) and executes pre-commit approval flow.
-- **`ChessBoardArea.tsx`**: Renders the max-sized chessboard grid (`85vh`), handles drag-and-drop & click-to-move input, renders legal destination dots, and applies solid red square highlights (`badMoveSquare`) on mistakes.
-- **`CoachPanel.tsx`**: Renders the `User - [Rating]` coach banner and 3 permanent action buttons (💡 **Hint Box**, ▶️ **Play Anyway**, **Show Follow Up Moves**).
-- **`chessTranslator.ts`**: Converts SAN notation (e.g. `Nf3`, `exd5`) into natural English (e.g. `White Knight to f3`, `Pawn takes Pawn on d5`).
+- **`App.tsx`**: Manages master game state (`gameId`, `fen`, `playerColor`, `warningActive`, `history`). Renders the top navigation bar (`You Vs Robot`, `Side Selection`, `Restart Game`, `Learner Mode: ON/OFF`, `Coach Voice: ON/OFF`, `Undo Move`) and executes pre-commit approval flow.
+- **`ChessBoardArea.tsx`**: Renders the max-sized responsive chessboard grid (`85vh`), handles drag-and-drop & click-to-move input, renders legal destination dots, visual engine arrows, and applies solid red square highlights (`badMoveSquare`) on mistakes.
+- **`CoachOverlay.tsx`**: Renders the pre-commit approval card over the board with 3 standard buttons: 💡 **Hint Box (Puzzle Hint Mode)**, ▶️ **Play Anyway**, and 🛡️ **Show Follow Up Moves**.
+- **`soundEffects.ts`**: Web Audio API synthesizer for classic wooden piece movement/capture sounds (`chessSounds.playMove()`, `chessSounds.playCapture()`) and Web Speech API TTS (`speakCoachMessage()`).
+- **`chessTranslator.ts`**: Converts SAN notation (e.g. `Nf3`, `exd5`) into natural English with automatic turn-perspective flipping for opponent reply threats.
 
 ---
 
