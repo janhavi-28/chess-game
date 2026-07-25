@@ -51,19 +51,8 @@ class MoveClassifier:
         uci = move.uci()
 
         played_english = self._san_to_english(board, move, san)
-        
-        # 1) Book-move shortcut for the opening
-        if ply_number <= self.book_ply_limit and uci in BOOK_MOVES_UCI:
-            return {
-                "label": LABELS["BOOK"],
-                "cp_loss": 0,
-                "best_move_san": san,
-                "best_move_uci": uci,
-                "top_alternatives": [],
-                "explanation": f"{played_english} is standard opening theory -- a solid, well-known move.",
-            }
 
-        # 2) Ask the engine for its top lines from the current position
+        # Ask the Stockfish engine for top 3 candidate moves at depth 14
         top_lines = self.engine.best_moves(board, n=3)
         if not top_lines or top_lines[0]["move"] is None:
             return {
@@ -76,15 +65,25 @@ class MoveClassifier:
         best_is_mate = top_lines[0]["is_mate"]
         best_uci = top_lines[0]["move"]
 
-        # 3) Evaluate the position that actually results from the played move
-        played_score = self.engine.score_after_move(board, move)
-        played_cp = played_score.score(mate_score=CP_MATE)
-        played_is_mate = played_score.is_mate()
+        # Check if the played move matches one of the engine's top candidate lines
+        matched_line = next((line for line in top_lines if line["move"] == uci), None)
+
+        if matched_line is not None:
+            played_cp = matched_line["score_cp"]
+            played_is_mate = matched_line["is_mate"]
+        else:
+            played_score = self.engine.score_after_move(board, move)
+            played_cp = played_score.score(mate_score=CP_MATE)
+            played_is_mate = played_score.is_mate()
 
         cp_loss = self._cp_loss(best_cp, played_cp, best_is_mate, played_is_mate)
         is_top_move = (uci == best_uci)
 
-        label = self._label_from_cp_loss(cp_loss, is_top_move, board, move, played_cp)
+        # Label solid opening moves in early plies as Book moves if CP loss is minimal
+        if ply_number <= self.book_ply_limit and cp_loss <= 20:
+            label = LABELS["BOOK"]
+        else:
+            label = self._label_from_cp_loss(cp_loss, is_top_move, board, move, played_cp)
 
         try:
             best_english = self._san_to_english(board, chess.Move.from_uci(best_uci), top_lines[0]["san"]) if best_uci else ""
