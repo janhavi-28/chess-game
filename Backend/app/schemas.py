@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 
@@ -17,13 +17,13 @@ class MoveAlternative(BaseModel):
     score_cp: Optional[int] = None
     is_mate: bool = False
     mate_in: Optional[int] = None
-    pv: List[str] = []
+    pv: List[str] = Field(default_factory=list)
 
 
 class ThreatPreview(BaseModel):
     opponent_best_reply: Optional[str] = None
     opponent_best_reply_san: Optional[str] = None
-    resulting_pv: List[str] = []
+    resulting_pv: List[str] = Field(default_factory=list)
     score_after_reply_cp: Optional[int] = None
     is_mate_threat: bool = False
     mate_in: Optional[int] = None
@@ -37,7 +37,7 @@ class PreMoveCheckResponse(BaseModel):
     best_eval_cp: Optional[int] = None
     best_move_uci: Optional[str] = None
     best_move_san: Optional[str] = None
-    top_alternatives: List[MoveAlternative] = []
+    top_alternatives: List[MoveAlternative] = Field(default_factory=list)
     threat_preview: Optional[ThreatPreview] = None
     should_warn: bool = False
     warning_message: Optional[str] = None
@@ -63,4 +63,4 @@ class GameStateResponse(BaseModel):
     turn: str
     is_game_over: bool
     result: Optional[str] = None
-    move_history: List[dict] = []
+    move_history: List[dict] = Field(default_factory=list)

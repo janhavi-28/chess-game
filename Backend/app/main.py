@@ -24,7 +24,7 @@ manager: GameManager = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global engine, manager
-    engine = StockfishEngine(depth=14)
+    engine = StockfishEngine(depth=8)
     classifier = MoveClassifier(engine)
     manager = GameManager(engine, classifier)
     yield
@@ -56,11 +56,13 @@ def get_state(game_id: str):
 
 
 @app.post("/api/game/{game_id}/undo")
-def undo_move(game_id: str):
+def undo_move(game_id: str, plies: int = 2):
     try:
-        return manager.undo_last_move(game_id)
+        return manager.undo_last_move(game_id, plies=plies)
     except KeyError:
         raise HTTPException(404, "Game not found")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
 
 
 @app.post("/api/move/precheck", response_model=PreMoveCheckResponse)

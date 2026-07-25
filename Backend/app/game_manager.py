@@ -88,6 +88,7 @@ class GameManager:
             "san": san,
             "classification": classification["label"],
             "cp_loss": classification["cp_loss"],
+            "fen_before": board.fen(),
         })
 
         return {
@@ -98,10 +99,12 @@ class GameManager:
             "result": board.result() if board.is_game_over() else None,
         }
 
-    def undo_last_move(self, game_id: str) -> dict:
+    def undo_last_move(self, game_id: str, plies: int = 2) -> dict:
         game = self.get_game(game_id)
-        # Pop moves (if robot moved as well, pop both moves back to player turn)
-        pops = 2 if len(game.board.move_stack) >= 2 else (1 if len(game.board.move_stack) == 1 else 0)
+        if plies < 1:
+            raise ValueError("plies must be at least 1")
+
+        pops = min(plies, len(game.board.move_stack))
         for _ in range(pops):
             if len(game.board.move_stack) > 0:
                 game.board.pop()

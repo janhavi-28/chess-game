@@ -39,7 +39,7 @@ CP_MATE = 100_000
 
 
 class StockfishEngine:
-    def __init__(self, path: str = STOCKFISH_PATH, depth: int = 12,
+    def __init__(self, path: str = STOCKFISH_PATH, depth: int = 8,
                  threads: int = 2, hash_mb: int = 128):
         self.path = path
         self.depth = depth
@@ -57,10 +57,11 @@ class StockfishEngine:
 
     def best_moves(self, board: chess.Board, n: int = 3, depth: Optional[int] = None) -> List[dict]:
         """Top-N candidate moves with evaluation, from the mover's perspective."""
+        limit = chess.engine.Limit(depth=depth or self.depth, time=0.05)
         infos = self.engine.analyse(
             board,
-            chess.engine.Limit(depth=depth or self.depth),
-            multipv=n,
+            limit,
+            multipv=min(n, board.legal_moves.count()) or 1,
         )
         if isinstance(infos, dict):
             infos = [infos]
