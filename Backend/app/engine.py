@@ -61,9 +61,33 @@ class StockfishEngine:
             ) from e
 
     def _safe_analyse(self, board: chess.Board, limit: chess.engine.Limit, multipv: Optional[int] = None):
-        """Thread-safe engine analysis with automatic process recovery."""
+        """Thread-safe engine analysis with automatic process recovery.
+
+        Validates the board first so an illegal position raises ValueError
+        rather than crashing the Stockfish process.
+        """
+        # Sanity-check the board before handing it to the engine.
+        # An invalid board (e.g. from a race-condition double-commit) would
+        # cause the engine to crash and leave isRobotThinking stuck = True.
+        status = board.status()
+        if status != chess.STATUS_VALID:
+            raise ValueError(
+                f"Invalid board position (status={status:#x}, fen={board.fen()}). "
+                "Cannot analyse."
+            )
+
         with self.lock:
             try:
+                if multipv:
+                    return self.engine.analyse(board, limit, multipv=multipv)
+                return self.engine.analyse(board, limit)
+            except chess.engine.EngineError:
+                # Engine crashed — restart it then retry once.
+                try:
+                    self.engine.quit()
+                except Exception:
+                    pass
+                self._start_engine()
                 if multipv:
                     return self.engine.analyse(board, limit, multipv=multipv)
                 return self.engine.analyse(board, limit)
@@ -73,9 +97,7 @@ class StockfishEngine:
                 except Exception:
                     pass
                 self._start_engine()
-                if multipv:
-                    return self.engine.analyse(board, limit, multipv=multipv)
-                return self.engine.analyse(board, limit)
+                raise
 
     def close(self):
         with self.lock:
@@ -85,8 +107,13 @@ class StockfishEngine:
                 pass
 
     def best_moves(self, board: chess.Board, n: int = 3, depth: Optional[int] = None) -> List[dict]:
-        """Top-N candidate moves with evaluation, from the mover's perspective."""
-        limit = chess.engine.Limit(depth=depth or self.depth)
+        """Top-N candidate moves with evaluation, from the mover's perspective.
+
+        Uses whichever limit fires first: the configured depth OR 1.5 s.
+        This keeps the robot responsive while still playing decent moves.
+        Move-quality analysis (precheck/commit) uses pure depth limits for accuracy.
+        """
+        limit = chess.engine.Limit(depth=depth or self.depth, time=1.5)
         multipv = min(n, board.legal_moves.count()) or 1
         infos = self._safe_analyse(board, limit, multipv=multipv)
         if isinstance(infos, dict):
