@@ -24,7 +24,7 @@ manager: GameManager = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global engine, manager
-    engine = StockfishEngine(depth=14)
+    engine = StockfishEngine(depth=8)
     classifier = MoveClassifier(engine)
     manager = GameManager(engine, classifier)
     yield
