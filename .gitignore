@@ -21,3 +21,6 @@ dist-ssr/
 .env.*
 .DS_Store
 Thumbs.db
+
+# Build archives
+*.zip
