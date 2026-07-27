@@ -4,7 +4,7 @@ import chess.pgn
 from typing import Dict, Optional
 
 from .engine import StockfishEngine
-from .classifier import MoveClassifier, WARN_LABELS
+from .classifier import MoveClassifier, WARN_LABELS, BOX_LABELS
 
 
 class Game:
@@ -45,7 +45,9 @@ class GameManager:
 
         result = dict(classification)
         should_warn = classification["label"] in WARN_LABELS
+        is_box_tier = classification["label"] in BOX_LABELS
         result["should_warn"] = should_warn
+        result["is_box_tier"] = is_box_tier
         result["threat_preview"] = None
         result["warning_message"] = None
 

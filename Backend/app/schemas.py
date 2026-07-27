@@ -40,6 +40,7 @@ class PreMoveCheckResponse(BaseModel):
     top_alternatives: List[MoveAlternative] = Field(default_factory=list)
     threat_preview: Optional[ThreatPreview] = None
     should_warn: bool = False
+    is_box_tier: bool = False
     warning_message: Optional[str] = None
 
 
