@@ -26,20 +26,20 @@ The frontend is a single-page application built using Vite, styled with Tailwind
 
 ```mermaid
 graph TD
-    App[App.tsx - Master State, Header Bar & Control Loop] --> Board[ChessBoardArea.tsx - Max-Sized Board & Red Highlight]
-    App --> Overlay[CoachOverlay.tsx - Pre-Commit Approval Card & Puzzle Hint Mode]
-    App --> Coach[CoachPanel.tsx - Side Feedback & 3-Button Controls]
-    App --> Speech[SpeechBubble.tsx - User Rating Card]
-    App --> Log[MoveLog.tsx - Verbose Move History]
+    App[App.tsx - Master State, Header Bar & Control Loop] --> Board[ChessBoardArea.tsx - Max-Sized Board, Illegal Flash & Arrows]
+    App --> Overlay[CoachOverlay.tsx - Pre-Commit Approval Card & Action Buttons]
+    App --> Log[MoveLog.tsx - Verbose Move History & Badges]
     App --> Translator[chessTranslator.ts - SAN to English & Turn Perspective]
-    App --> Sound[soundEffects.ts - Web Audio API Sounds & Web Speech API TTS]
-    App --> Service[services/api.ts - REST Client]
+    App --> Sound[soundEffects.ts - Web Audio API Sounds]
+    App --> Voice[coachVoice.ts - Web Speech API TTS Narration]
+    App --> Service[services/api.ts - REST Client with Auto-Retry]
 ```
 
-- **`App.tsx`**: Manages master game state (`gameId`, `fen`, `playerColor`, `warningActive`, `history`). Renders the top navigation bar (`You Vs Robot`, `Side Selection`, `Restart Game`, `Learner Mode: ON/OFF`, `Coach Voice: ON/OFF`, `Undo Move`) and executes pre-commit approval flow.
-- **`ChessBoardArea.tsx`**: Renders the max-sized responsive chessboard grid (`85vh`), handles drag-and-drop & click-to-move input, renders legal destination dots, visual engine arrows, and applies solid red square highlights (`badMoveSquare`) on mistakes.
-- **`CoachOverlay.tsx`**: Renders the pre-commit approval card over the board with 3 standard buttons: 💡 **Hint Box (Puzzle Hint Mode)**, ▶️ **Play Anyway**, and 🛡️ **Show Follow Up Moves**.
-- **`soundEffects.ts`**: Web Audio API synthesizer for classic wooden piece movement/capture sounds (`chessSounds.playMove()`, `chessSounds.playCapture()`) and Web Speech API TTS (`speakCoachMessage()`).
+- **`App.tsx`**: Manages master game state (`gameId`, `fen`, `playerColor`, `warningActive`, `history`, `isRobotThinking`, `isConnecting`). Renders the top navigation bar (`Game Mode`, `Side Selection`, `Restart Game`, `Learner Mode: ON/OFF`, `Coach Voice: ON/OFF`, `Undo Move`), handles startup auto-retry (3 attempts, 2s delay), and executes pre-commit approval flow.
+- **`ChessBoardArea.tsx`**: Renders the max-sized responsive chessboard grid (`85vh`), handles drag-and-drop & click-to-move input, renders legal destination dots, visual engine arrows, orange-red flash on illegal/pinned moves (`illegalFlashSquare`), and solid red square highlights (`badMoveSquare`) on mistakes.
+- **`CoachOverlay.tsx`**: Renders the pre-commit approval card over the board with 3 standard buttons: 💡 **Hint Box**, ▶️ **Play Anyway**, and 🛡️ **Show Follow Up Moves**.
+- **`coachVoice.ts`**: Web Speech API Text-to-Speech narration layer. Audio lines are 100% synchronized with the committed classification badge in `commitAndFinalize`.
+- **`soundEffects.ts`**: Web Audio API synthesizer for classic wooden piece movement/capture sounds (`playMoveSoundForUci()`).
 - **`chessTranslator.ts`**: Converts SAN notation (e.g. `Nf3`, `exd5`) into natural English with automatic turn-perspective flipping for opponent reply threats.
 
 ---
@@ -57,8 +57,8 @@ graph LR
 ```
 
 - **`app/main.py`**: Exposes REST endpoints for game lifecycle (`/api/game/new`, `/api/game/{id}/state`, `/api/game/{id}/undo`), move precheck (`/api/move/precheck`), move commit (`/api/move/commit`), and best engine moves (`/api/engine/best-moves`).
-- **`app/engine.py`**: Spawns and manages the Stockfish 16 subprocess via `python-chess`. Runs multi-pv centipawn evaluation at depth 14+.
-- **`app/classifier.py`**: Implements opening book lookup and centipawn loss calculations ($\text{CP Loss} = \text{Best Eval} - \text{Played Eval}$) to categorize moves into *Book*, *Brilliant*, *Best*, *Excellent*, *Good*, *Inaccuracy*, *Mistake*, *Blunder*, and *Miss*.
+- **`app/engine.py`**: Spawns and manages the Stockfish 16 subprocess via `python-chess`. Runs multi-pv centipawn evaluation at depth 14 with a **1.5-second time cap** (`Limit(depth=14, time=1.5)`). Pre-validates `board.status() == STATUS_VALID` in `_safe_analyse` to prevent Stockfish process crashes on corrupted FEN states.
+- **`app/classifier.py`**: Implements opening book lookup and centipawn loss calculations ($\text{CP Loss} = \text{Best Eval} - \text{Played Eval}$) to categorize moves into *Book*, *Brilliant*, *Best*, *Excellent*, *Good*, *Inaccuracy*, *Mistake*, *Blunder*, and *Worst Move*.
 - **`app/game_manager.py`**: Stores in-memory game sessions (`Game` objects), board move stacks (`chess.Board`), move histories, and executes full-stack move popping (`undo_last_move`).
 
 ---
@@ -79,29 +79,33 @@ sequenceDiagram
     Player->>Frontend: Plays move (Drag or Click)
     Frontend->>Backend: POST /api/move/precheck {game_id, move_uci}
     Backend->>Classifier: classify_move(board, move)
-    Classifier->>Stockfish: best_moves(depth=14, n=3)
+    Classifier->>Stockfish: best_moves(depth=14, time=1.5)
     Stockfish-->>Classifier: Returns top 3 engine lines & eval_cp
     Classifier->>Stockfish: score_after_move(board, move)
     Stockfish-->>Classifier: Returns played move eval_cp
     Classifier-->>Backend: Returns classification & threat preview
     Backend-->>Frontend: Returns PreMoveCheckResponse (rating, threat, alternatives)
     
-    Frontend->>Frontend: Display "User - [Rating]" in Coach Feedback
-    
     alt Move is Good / Best / Book / Excellent
         Frontend->>Backend: POST /api/move/commit {game_id, move_uci}
-        Frontend->>Frontend: Update Board FEN & Ready Status
-        Frontend->>Backend: GET /api/engine/best-moves (Opponent Turn)
-        Backend->>Stockfish: Get bot reply move
-        Stockfish-->>Backend: Return bot UCI move
-        Backend-->>Frontend: Update Board FEN with Bot Move
-    else Move is Inaccuracy / Mistake / Blunder / Miss
+        Backend-->>Frontend: Returns CommitMoveResponse (fen, classification, is_game_over)
+        Frontend->>Frontend: Update Board FEN & Play Synchronized Voice
+        
+        alt Is Checkmate or Draw
+            Frontend->>Frontend: Display Winner Announcement ("🏆 Checkmate! White/Black wins")
+        else Game Continues
+            Frontend->>Backend: GET /api/engine/best-moves (Opponent Turn)
+            Backend->>Stockfish: Get bot reply move
+            Stockfish-->>Backend: Return bot UCI move
+            Backend-->>Frontend: Update Board FEN with Bot Move
+        end
+    else Move is Mistake / Blunder / Worst Move
         Frontend->>Frontend: Highlight destination square in RED & Enter Action Pending State
         
         alt Player clicks "Play Anyway"
             Player->>Frontend: Clicks "Play Anyway" button
             Frontend->>Backend: POST /api/move/commit {game_id, move_uci}
-            Frontend->>Frontend: Update Board FEN
+            Frontend->>Frontend: Update Board FEN & Play Synchronized Voice
             Frontend->>Backend: GET /api/engine/best-moves (Opponent Turn)
             Stockfish-->>Frontend: Bot plays reply move
         else Player clicks "Undo Move" (Top Header)
@@ -116,26 +120,41 @@ sequenceDiagram
 
 ---
 
-## 4. API Specification & Interface Contracts
+## 4. Arrow & Learner Mode Rules
 
-### 4.1 `POST /api/game/new`
+```mermaid
+flowchart TD
+    A[Board Arrow Request] --> B{Is followUpArrows set?}
+    B -- Yes (User clicked 'Show Follow Up Moves') --> C[Render Color-Coded Follow-Up Arrows]
+    B -- No --> D{Is Learner Mode ON?}
+    D -- OFF --> E[Suppress All Automatic Arrows]
+    D -- ON --> F{Is warningActive true?}
+    F -- Yes --> G[Render Red Threat & Green Alternative Arrows]
+    F -- No --> H[Render Piece Selection Hints squareSuggestions]
+```
+
+---
+
+## 5. API Specification & Interface Contracts
+
+### 5.1 `POST /api/game/new`
 - **Request Body**: `{ "starting_fen": "rnbqkbnr/..." }` (Optional)
 - **Response**: `GameStateResponse` (`game_id`, `fen`, `turn`, `move_history`)
 
-### 4.2 `POST /api/move/precheck`
+### 5.2 `POST /api/move/precheck`
 - **Request Body**: `{ "game_id": "uuid", "move_uci": "e2e4" }`
-- **Response**: `PreMoveCheckResponse` (`label`, `cp_loss`, `top_alternatives`, `threat_preview`)
+- **Response**: `PreMoveCheckResponse` (`label`, `cp_loss`, `top_alternatives`, `threat_preview`, `is_box_tier`)
 
-### 4.3 `POST /api/move/commit`
+### 5.3 `POST /api/move/commit`
 - **Request Body**: `{ "game_id": "uuid", "move_uci": "e2e4" }`
 - **Response**: `CommitMoveResponse` (`fen`, `san`, `classification`, `is_game_over`, `result`)
 
-### 4.4 `POST /api/game/{game_id}/undo`
+### 5.4 `POST /api/game/{game_id}/undo`
 - **Response**: `GameStateResponse` (pops last turn pair from move stack and returns updated FEN and history).
 
 ---
 
-## 5. Deployment Architecture (Vercel Serverless)
+## 6. Deployment Architecture (Vercel Serverless)
 
 ```mermaid
 graph TD
