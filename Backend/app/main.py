@@ -15,11 +15,15 @@ from .game_manager import GameManager
 from .schemas import (
     NewGameRequest, PreMoveCheckRequest, PreMoveCheckResponse,
     CommitMoveRequest, CommitMoveResponse, GameStateResponse,
+    StartPuzzleRequest, PuzzleAttemptRequest, PuzzleStateResponse,
 )
+
+from .puzzle_manager import PuzzleManager
 
 engine: StockfishEngine = None
 opponent_engine: StockfishEngine = None
 manager: GameManager = None
+puzzle_manager = PuzzleManager()
 
 
 @asynccontextmanager
@@ -118,3 +122,23 @@ def robot_move(game_id: str):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.post("/api/puzzles/start")
+def start_puzzle(req: StartPuzzleRequest):
+    try:
+        return puzzle_manager.start_puzzle(req.level)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+@app.post("/api/puzzles/attempt")
+def attempt_puzzle(req: PuzzleAttemptRequest):
+    try:
+        return puzzle_manager.attempt_move(req.session_id, req.move_uci)
+    except KeyError:
+        raise HTTPException(404, "Puzzle session not found")
+
+@app.get("/api/puzzles/hint/{session_id}")
+def puzzle_hint(session_id: str):
+    square = puzzle_manager.get_hint_square(session_id)
+    return {"hint_square": square}

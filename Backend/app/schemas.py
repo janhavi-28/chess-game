@@ -66,3 +66,18 @@ class GameStateResponse(BaseModel):
     is_game_over: bool
     result: Optional[str] = None
     move_history: List[dict] = Field(default_factory=list)
+
+class StartPuzzleRequest(BaseModel):
+    level: int  # 1-5
+
+class PuzzleAttemptRequest(BaseModel):
+    session_id: str
+    move_uci: str
+
+class PuzzleStateResponse(BaseModel):
+    session_id: Optional[str] = None
+    fen: str
+    side_to_move: Optional[str] = None
+    correct: Optional[bool] = None
+    opponent_reply_uci: Optional[str] = None
+    solved: Optional[bool] = None
