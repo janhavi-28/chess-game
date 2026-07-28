@@ -31,7 +31,9 @@
 - **Visual Styling**: Built with modern dark aesthetic (`#4a4a4a` / `#8a8a8a` square pattern), crisp bold black SVG coordinate labels (`a-h`, `1-8`), and smooth 150ms piece movement animations.
 - **Dual Control Options**: Supports both **Drag-and-Drop** piece dragging and **Click-to-Move** (click source piece $\rightarrow$ green target dots $\rightarrow$ click destination).
 - **Side Selection**: Toggle between **⚪ White** and **⚫ Black** side; board flips automatically and Stockfish engine plays the opposing color.
-- **Clean Header Navigation Bar**: Top navigation bar displaying **Game Mode Selection** (*You Vs Robot*, *Robot Vs Robot*, *You Vs Friend*), **Side Selection**, **Restart Game**, **Learner Mode: ON/OFF**, **Coach Voice: ON/OFF**, and **Undo Move**.
+- **Clean Header Navigation Bar**: Top navigation bar displaying **You Vs Robot** mode label with an indented rating slider (**1320 - 3190 Rating Range**), **Side Selection**, **Restart Game**, **Learner Mode: ON/OFF**, **Coach Voice: ON/OFF**, and **Undo Move**.
+- **Rating-Based Robot Opponent (1320 - 3190 Rating)**: Configurable Stockfish robot opponent driven by a separate, dedicated engine instance (`opponent_engine`) using native `UCI_LimitStrength` and `UCI_Elo` bounds (1320 to 3190).
+- **Spoken Rating Announcement**: Web Speech API voice coach announces rating and tier (e.g., *"Rating 1500. Club Player mode."*) upon game creation.
 
 ### 3.2 Real-Time Stockfish 16 Engine Integration
 - **Engine Analysis**: Backend communicates with Stockfish 16 at depth 14 with a **1.5-second time cap** per analysis line for millisecond centipawn evaluation (`score_cp`) and mate calculations without UI hangs.

@@ -11,9 +11,10 @@
 ```mermaid
 graph TD
     Client[React 18 + TypeScript Frontend] <-->|HTTP REST / JSON| API[FastAPI Python Backend]
-    API <--> Manager[GameManager - State & History]
+    API <--> Manager[GameManager - State & Rating]
     API <--> Classifier[MoveClassifier - CP Loss Math]
-    Classifier <--> Engine[Stockfish 16 Engine Process]
+    Classifier <--> Engine[Stockfish 16 Analysis Engine]
+    Manager <--> OpponentEngine[Stockfish 16 Opponent Engine - UCI_Elo 1320-3190]
 ```
 
 ---
