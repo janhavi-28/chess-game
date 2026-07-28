@@ -4,6 +4,7 @@ from typing import List, Optional
 
 class NewGameRequest(BaseModel):
     starting_fen: Optional[str] = None
+    opponent_rating: Optional[int] = 1500  # 1320-3190, default mid-range
 
 
 class PreMoveCheckRequest(BaseModel):

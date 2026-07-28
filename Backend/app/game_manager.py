@@ -8,9 +8,10 @@ from .classifier import MoveClassifier, WARN_LABELS, BOX_LABELS
 
 
 class Game:
-    def __init__(self, starting_fen: Optional[str] = None):
+    def __init__(self, starting_fen: Optional[str] = None, opponent_rating: Optional[int] = 1500):
         self.board = chess.Board(starting_fen) if starting_fen else chess.Board()
         self.move_history = []  # [{ply, uci, san, label, cp_loss}]
+        self.opponent_rating = opponent_rating
 
     @property
     def next_ply(self) -> int:
@@ -19,21 +20,32 @@ class Game:
 
 
 class GameManager:
-    def __init__(self, engine: StockfishEngine, classifier: MoveClassifier):
+    def __init__(self, engine: StockfishEngine, opponent_engine: StockfishEngine, classifier: MoveClassifier):
         self.engine = engine
+        self.opponent_engine = opponent_engine
         self.classifier = classifier
         self.games: Dict[str, Game] = {}
 
     # -- lifecycle -----------------------------------------------------
-    def new_game(self, starting_fen: Optional[str] = None) -> str:
+    def new_game(self, starting_fen: Optional[str] = None, opponent_rating: Optional[int] = 1500) -> str:
         game_id = str(uuid.uuid4())
-        self.games[game_id] = Game(starting_fen)
+        self.games[game_id] = Game(starting_fen, opponent_rating)
         return game_id
 
     def get_game(self, game_id: str) -> Game:
         if game_id not in self.games:
             raise KeyError("Game not found")
         return self.games[game_id]
+
+    def get_robot_move(self, game_id: str) -> dict:
+        # Note: opponent_engine is a single shared instance. If this ever needs to
+        # serve multiple simultaneous games at different ratings, strength-setting
+        # would race between requests. Fine for single-player; would need engine pool
+        # if ever multi-user.
+        game = self.get_game(game_id)
+        self.opponent_engine.set_strength(game.opponent_rating)
+        moves = self.opponent_engine.best_moves(game.board, n=1)
+        return {"moves": moves}
 
     # -- core feature: check a move BEFORE it's committed --------------
     def precheck_move(self, game_id: str, move_uci: str) -> dict:

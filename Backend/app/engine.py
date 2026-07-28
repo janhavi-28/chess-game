@@ -60,6 +60,16 @@ class StockfishEngine:
                 f"Install Stockfish and/or set the STOCKFISH_PATH env var."
             ) from e
 
+    def set_strength(self, elo: Optional[int]):
+        """Limit this engine instance's playing strength to the given Elo
+        (1320-3190), or pass None to restore full strength."""
+        with self.lock:
+            if elo is not None:
+                elo = max(1320, min(3190, elo))
+                self.engine.configure({"UCI_LimitStrength": True, "UCI_Elo": elo})
+            else:
+                self.engine.configure({"UCI_LimitStrength": False})
+
     def _safe_analyse(self, board: chess.Board, limit: chess.engine.Limit, multipv: Optional[int] = None):
         """Thread-safe engine analysis with automatic process recovery.
 

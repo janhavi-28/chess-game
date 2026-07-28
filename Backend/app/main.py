@@ -18,17 +18,20 @@ from .schemas import (
 )
 
 engine: StockfishEngine = None
+opponent_engine: StockfishEngine = None
 manager: GameManager = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global engine, manager
+    global engine, opponent_engine, manager
     engine = StockfishEngine(depth=14)
+    opponent_engine = StockfishEngine(depth=14)
     classifier = MoveClassifier(engine)
-    manager = GameManager(engine, classifier)
+    manager = GameManager(engine, opponent_engine, classifier)
     yield
     engine.close()
+    opponent_engine.close()
 
 
 app = FastAPI(title="Chess Mistake Coach API", lifespan=lifespan)
@@ -43,7 +46,7 @@ app.add_middleware(
 
 @app.post("/api/game/new")
 def new_game(req: NewGameRequest):
-    game_id = manager.new_game(req.starting_fen)
+    game_id = manager.new_game(req.starting_fen, req.opponent_rating)
     return manager.get_state(game_id)
 
 
@@ -100,6 +103,16 @@ def best_moves(game_id: str, n: int = 3):
     except KeyError:
         raise HTTPException(404, "Game not found")
     return {"moves": engine.best_moves(game.board, n=n)}
+
+
+@app.get("/api/engine/robot-move/{game_id}")
+def robot_move(game_id: str):
+    """Returns the opponent's move, played at the game's configured
+    rating -- separate from the full-strength analysis engine."""
+    try:
+        return manager.get_robot_move(game_id)
+    except KeyError:
+        raise HTTPException(404, "Game not found")
 
 
 @app.get("/health")
