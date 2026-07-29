@@ -126,7 +126,7 @@ sequenceDiagram
 ```mermaid
 flowchart TD
     A[Board Arrow Request] --> B{Is followUpArrows set?}
-    B -- Yes (User clicked 'Show Follow Up Moves') --> C[Render Color-Coded Follow-Up Arrows]
+    B -- Yes (User clicked 'Show Follow Up Moves') --> C[Animate Refutation Sequence & Highlight Opponent Threat]
     B -- No --> D{Is Learner Mode ON?}
     D -- OFF --> E[Suppress All Automatic Arrows]
     D -- ON --> F{Is warningActive true?}
@@ -144,7 +144,7 @@ flowchart TD
 
 ### 5.2 `POST /api/move/precheck`
 - **Request Body**: `{ "game_id": "uuid", "move_uci": "e2e4" }`
-- **Response**: `PreMoveCheckResponse` (`label`, `cp_loss`, `top_alternatives`, `threat_preview`, `is_box_tier`)
+- **Response**: `PreMoveCheckResponse` (`label`, `cp_loss`, `top_alternatives`, `refutation_sequence`, `threat_preview`, `is_box_tier`)
 
 ### 5.3 `POST /api/move/commit`
 - **Request Body**: `{ "game_id": "uuid", "move_uci": "e2e4" }`

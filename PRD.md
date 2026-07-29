@@ -67,7 +67,7 @@ Every move played by the user is evaluated against Stockfish thresholds and labe
 - **Move Controls (3 Standardized Buttons)**:
   1. 💡 **Hint Box**: Highlights the starting square of the top-ranked engine move.
   2. ▶️ **Play Anyway**: Finalizes the pending move, commits to the backend engine, and triggers opponent response.
-  3. 🛡️ **Show Follow Up Moves**: Displays color-coded engine candidate arrows on the board (Green for 1st, Amber for 2nd, Red for 3rd choice).
+  3. 🛡️ **Show Follow Up Moves**: Automatically animates the engine's predicted refutation sequence (Principal Variation) on the board to demonstrate how the opponent will punish the mistake. The opponent's threatening piece is highlighted in blue, accompanied by a synchronized voice warning, before smoothly snapping back to the original position.
 - **Top Header Undo Button**: **`Undo Move`** executes a full-stack rollback to retry your move.
 
 ### 3.6 Formatted Move Log
