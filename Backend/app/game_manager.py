@@ -66,6 +66,7 @@ class GameManager:
         if should_warn:
             threat = self.engine.threat_preview(board, move)
             result["threat_preview"] = threat
+            result["refutation_sequence"] = threat.get("resulting_pv", [])
             result["warning_message"] = self._build_warning(classification, threat, board, move)
 
         return result

@@ -40,6 +40,7 @@ class PreMoveCheckResponse(BaseModel):
     best_move_san: Optional[str] = None
     top_alternatives: List[MoveAlternative] = Field(default_factory=list)
     threat_preview: Optional[ThreatPreview] = None
+    refutation_sequence: Optional[List[str]] = None
     should_warn: bool = False
     is_box_tier: bool = False
     warning_message: Optional[str] = None
@@ -81,3 +82,4 @@ class PuzzleStateResponse(BaseModel):
     correct: Optional[bool] = None
     opponent_reply_uci: Optional[str] = None
     solved: Optional[bool] = None
+    first_move_source: Optional[str] = None

@@ -71,11 +71,14 @@ class PuzzleManager:
         session_id = str(uuid.uuid4())
         session = PuzzleSession(puzzle_id, fen, moves)
         self.sessions[session_id] = session
-        return {
+        res = {
             "session_id": session_id,
             "fen": session.board.fen(),
             "side_to_move": "white" if session.board.turn else "black",
         }
+        if level <= 2 and session.expected_move:
+            res["first_move_source"] = session.expected_move[:2]
+        return res
 
     def attempt_move(self, session_id: str, move_uci: str) -> dict:
         session = self.sessions.get(session_id)
