@@ -8,10 +8,12 @@ from .classifier import MoveClassifier, WARN_LABELS, BOX_LABELS
 
 
 class Game:
-    def __init__(self, starting_fen: Optional[str] = None, opponent_rating: Optional[int] = 1500):
+    def __init__(self, starting_fen: Optional[str] = None, opponent_rating: int = 1500):
         self.board = chess.Board(starting_fen) if starting_fen else chess.Board()
         self.move_history = []  # [{ply, uci, san, label, cp_loss}]
         self.opponent_rating = opponent_rating
+        self.last_precheck_move_uci = None
+        self.last_precheck_classification = None
 
     @property
     def next_ply(self) -> int:
@@ -44,7 +46,7 @@ class GameManager:
         # if ever multi-user.
         game = self.get_game(game_id)
         self.opponent_engine.set_strength(game.opponent_rating)
-        moves = self.opponent_engine.best_moves(game.board, n=1)
+        moves = self.opponent_engine.best_moves(game.board, n=1, time_limit=1.5)
         return {"moves": moves}
 
     # -- core feature: check a move BEFORE it's committed --------------
@@ -54,6 +56,8 @@ class GameManager:
         move = self._parse_move(board, move_uci)
 
         classification = self.classifier.classify_move(board, move, game.next_ply)
+        game.last_precheck_move_uci = move_uci
+        game.last_precheck_classification = classification
 
         result = dict(classification)
         should_warn = classification["label"] in WARN_LABELS
@@ -92,7 +96,14 @@ class GameManager:
         board = game.board
         move = self._parse_move(board, move_uci)
 
-        classification = self.classifier.classify_move(board, move, game.next_ply)
+        if game.last_precheck_move_uci == move_uci and game.last_precheck_classification:
+            classification = game.last_precheck_classification
+        else:
+            classification = self.classifier.classify_move(board, move, game.next_ply)
+            
+        game.last_precheck_move_uci = None
+        game.last_precheck_classification = None
+
         san = board.san(move)
         ply = game.next_ply
         board.push(move)

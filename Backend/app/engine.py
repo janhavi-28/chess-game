@@ -116,14 +116,14 @@ class StockfishEngine:
             except Exception:
                 pass
 
-    def best_moves(self, board: chess.Board, n: int = 3, depth: Optional[int] = None) -> List[dict]:
+    def best_moves(self, board: chess.Board, n: int = 3, depth: Optional[int] = None, time_limit: Optional[float] = None) -> List[dict]:
         """Top-N candidate moves with evaluation, from the mover's perspective.
 
-        Uses whichever limit fires first: the configured depth OR 1.5 s.
-        This keeps the robot responsive while still playing decent moves.
-        Move-quality analysis (precheck/commit) uses pure depth limits for accuracy.
+        Uses whichever limit fires first: the configured depth OR the provided time_limit.
+        Move-quality analysis and hints use pure depth limits for accuracy.
+        Robot moves can pass a time_limit to keep the game responsive.
         """
-        limit = chess.engine.Limit(depth=depth or self.depth, time=1.5)
+        limit = chess.engine.Limit(depth=depth or self.depth, time=time_limit)
         multipv = min(n, board.legal_moves.count()) or 1
         infos = self._safe_analyse(board, limit, multipv=multipv)
         if isinstance(infos, dict):
