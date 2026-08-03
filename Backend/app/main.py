@@ -142,3 +142,12 @@ def attempt_puzzle(req: PuzzleAttemptRequest):
 def puzzle_hint(session_id: str):
     square = puzzle_manager.get_hint_square(session_id)
     return {"hint_square": square}
+
+@app.get("/api/puzzles/random")
+def random_puzzle(level: int = 1):
+    puzzle_id, fen, moves_str = puzzle_manager._query_random_puzzle(level)
+    return {
+        "puzzle_id": puzzle_id,
+        "fen": fen,
+        "moves_uci": moves_str.split()
+    }
