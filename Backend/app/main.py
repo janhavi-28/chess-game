@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import sys
 import asyncio
+import chess
 
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
@@ -146,8 +147,30 @@ def puzzle_hint(session_id: str):
 @app.get("/api/puzzles/random")
 def random_puzzle(level: int = 1):
     puzzle_id, fen, moves_str = puzzle_manager._query_random_puzzle(level)
+    
+    uci_moves = moves_str.split()
+    board = chess.Board(fen)
+    classified_moves = []
+    
+    for i, uci in enumerate(uci_moves):
+        move = chess.Move.from_uci(uci)
+        ply = board.ply()
+        
+        try:
+            classification = manager.classifier.classify_move(board, move, ply)
+            label = classification["label"]
+        except Exception as e:
+            label = "Best Move"
+            
+        board.push(move)
+        
+        classified_moves.append({
+            "uci": uci,
+            "classification": label
+        })
+
     return {
         "puzzle_id": puzzle_id,
         "fen": fen,
-        "moves_uci": moves_str.split()
+        "moves": classified_moves
     }
