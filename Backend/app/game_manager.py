@@ -76,8 +76,11 @@ class GameManager:
         return result
 
     def _build_warning(self, classification, threat, board, move) -> str:
+        if classification["label"] == "Opening Pawn Warning":
+            return classification["explanation"]
+
         san = board.san(move)
-        if threat.get("is_mate_threat") and threat.get("mate_in"):
+        if threat and threat.get("is_mate_threat") and threat.get("mate_in"):
             return (
                 f"Careful -- after {san}, your opponent has "
                 f"{threat.get('opponent_best_reply_san', 'a strong reply')} "

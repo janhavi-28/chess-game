@@ -1,0 +1,37 @@
+CHESS MOVE CLASSIFICATION RULES & POINTS
+
+When the chess engine evaluates a position, it uses "centipawns" (cp), where 100 points = the value of 1 pawn. 
+Here is how many points of advantage you are allowed to lose for a move to fall into each category:
+
+--- POINT THRESHOLDS (CENTIPAWN LOSS) ---
+
+[The Good Moves]
+* Brilliant (!!): 0 points lost (Must be the absolute #1 best move AND involve a sacrifice).
+* Best Move: 0 points lost (The absolute #1 best move without a sacrifice).
+* Excellent: 0 to 10 points lost (Practically as good as the Best Move).
+* Good: 11 to 25 points lost (A fine move, but slightly noticeably worse than the top choice).
+* Book: 0 points lost (A recognized standard opening move).
+
+[The Bad Moves]
+* Inaccuracy: 26 to 60 points lost (Gives up about half a pawn's worth of advantage).
+* Mistake: 61 to 150 points lost (Gives up about 1 full pawn's worth of advantage).
+* Blunder: 151 to 300 points lost (Gives up 2 to 3 pawns, usually hanging a piece).
+* Worst Move: More than 300 points lost (A catastrophic move, like hanging your Queen or walking into checkmate).
+
+
+--- NEW "MAIN BRAIN" RULES FOR TOP-TIER MOVES ---
+
+1. Brilliant Moves
+Must be the #1 Best Move AND involve sacrificing a piece.
+Special Scenarios:
+- Queen Sacrifice: Sacrificing the Queen while maintaining a winning advantage or forcing checkmate. (Coach: "A brilliant Queen sacrifice! This leads to a decisive advantage.")
+- Defensive Sacrifice: Sacrificing a piece (like a Knight) to save your King from a dangerous attack and restore equality. (Coach: "Brilliant defensive sacrifice!")
+
+2. Best Moves
+The absolute #1 move on the board, but does not involve a sacrifice.
+Special Scenario:
+- Only Move: If this is the ONLY move that doesn't immediately lose the game (the #2 move is a total blunder). (Coach: "Great find! That was the only move that keeps you in the game.")
+
+3. Excellent Moves
+Technically the engine's 2nd or 3rd choice, but practically identical in strength to the #1 Best Move (less than 10 points lost).
+(Coach: "An excellent move! It's practically just as strong as the top choice.")
