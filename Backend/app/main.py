@@ -6,6 +6,24 @@ from fastapi.middleware.cors import CORSMiddleware
 import sys
 import asyncio
 import chess
+import os
+import razorpay
+from dotenv import load_dotenv
+from supabase import create_client, Client
+
+load_dotenv(override=True)
+
+razorpay_key_id = os.getenv("RAZORPAY_KEY_ID", "rzp_test_TTYOP1jpVr4bFq")
+razorpay_key_secret = os.getenv("RAZORPAY_KEY_SECRET", "2bxfsCA8tTg4CEbNdmwSoeSH")
+
+# Razorpay client will be instantiated per-request to avoid stale connection pools
+def get_razorpay_client():
+    return razorpay.Client(auth=(razorpay_key_id, razorpay_key_secret))
+
+
+supabase_url: str = os.getenv("SUPABASE_URL", "https://ipwanamxxugjtpksotxq.supabase.co")
+supabase_key: str = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwd2FuYW14eHVnanRwa3NvdHhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODAzNzYsImV4cCI6MjEwMzE1NjM3Nn0.qUDvpcGryR07yaAXPkxZYUfadM9C37wDRInEYOoSf-U")
+supabase: Client = create_client(supabase_url, supabase_key)
 
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
@@ -17,6 +35,7 @@ from .schemas import (
     NewGameRequest, PreMoveCheckRequest, PreMoveCheckResponse,
     CommitMoveRequest, CommitMoveResponse, GameStateResponse,
     StartPuzzleRequest, PuzzleAttemptRequest, PuzzleStateResponse,
+    CreateOrderRequest, VerifyPaymentRequest,
 )
 
 from .puzzle_manager import PuzzleManager
@@ -174,3 +193,36 @@ def random_puzzle(level: int = 1):
         "fen": fen,
         "moves": classified_moves
     }
+
+@app.post("/api/payment/create-order")
+def create_order(req: CreateOrderRequest):
+    try:
+        data = {
+            "amount": 100, # 1 INR in paise
+            "currency": "INR",
+            "receipt": req.user_id,
+        }
+        client = get_razorpay_client()
+        order = client.order.create(data=data)
+        return {"order_id": order["id"], "amount": 100, "currency": "INR"}
+    except Exception as e:
+        print("RAZORPAY ERROR:", e)
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(500, str(e))
+
+@app.post("/api/payment/verify")
+def verify_payment(req: VerifyPaymentRequest):
+    try:
+        client = get_razorpay_client()
+        client.utility.verify_payment_signature({
+            'razorpay_order_id': req.razorpay_order_id,
+            'razorpay_payment_id': req.razorpay_payment_id,
+            'razorpay_signature': req.razorpay_signature
+        })
+        
+        return {"status": "success"}
+    except razorpay.errors.SignatureVerificationError:
+        raise HTTPException(400, "Invalid signature")
+    except Exception as e:
+        raise HTTPException(500, str(e))

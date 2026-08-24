@@ -83,3 +83,12 @@ class PuzzleStateResponse(BaseModel):
     opponent_reply_uci: Optional[str] = None
     solved: Optional[bool] = None
     first_move_source: Optional[str] = None
+
+class CreateOrderRequest(BaseModel):
+    user_id: str
+
+class VerifyPaymentRequest(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+    user_id: str
