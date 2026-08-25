@@ -94,6 +94,10 @@ Every move played by the user is evaluated against Stockfish thresholds and labe
 - **Auto-Retry Connection**: Frontend attempts up to 3 automatic retries (2-second interval) on startup to connect to the backend.
 - **Interactive Connection Overlay**: If the backend is unreachable, a clean full-board overlay appears with a **🔄 Retry Connection** button instead of failing silently.
 
+### 3.11 User Authentication & Payments
+- **Google / Email Authentication**: Users must sign in via Supabase Auth (Google OAuth or Magic Link) to access their profile and payment status.
+- **Razorpay Premium Paywall**: To actually move a piece and play against the robot, a user must have `is_premium` status. Non-premium users trigger an intercept overlay requesting a ₹1 payment via Razorpay. Upon successful checkout, the database is updated and gameplay is unlocked.
+
 ---
 
 ## 4. Technical Stack & System Architecture

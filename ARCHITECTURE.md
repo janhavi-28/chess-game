@@ -11,6 +11,9 @@
 ```mermaid
 graph TD
     Client[React 18 + TypeScript Frontend] <-->|HTTP REST / JSON| API[FastAPI Python Backend]
+    Client <-->|OAuth / JWT| Supabase[Supabase - Auth & Profiles]
+    Client <-->|Popup / Scripts| Razorpay[Razorpay - Payment Gateway]
+    API <-->|Create Order| RazorpayAPI[Razorpay API]
     API <--> Manager[GameManager - State & Rating]
     API <--> Classifier[MoveClassifier - CP Loss Math]
     Classifier <--> Engine[Stockfish 16 Analysis Engine]
@@ -29,6 +32,7 @@ The frontend is a single-page application built using Vite, styled with Tailwind
 graph TD
     App[App.tsx - Master State, Header Bar & Control Loop] --> Board[ChessBoardArea.tsx - Max-Sized Board, Illegal Flash & Arrows]
     App --> Overlay[CoachOverlay.tsx - Pre-Commit Approval Card & Action Buttons]
+    App --> Payment[PaymentOverlay.tsx - Razorpay Checkout & Paywall]
     App --> Log[MoveLog.tsx - Verbose Move History & Badges]
     App --> Translator[chessTranslator.ts - SAN to English & Turn Perspective]
     App --> Sound[soundEffects.ts - Web Audio API Sounds]
@@ -36,12 +40,23 @@ graph TD
     App --> Service[services/api.ts - REST Client with Auto-Retry]
 ```
 
-- **`App.tsx`**: Manages master game state (`gameId`, `fen`, `playerColor`, `warningActive`, `history`, `isRobotThinking`, `isConnecting`). Renders the top navigation bar (`Game Mode`, `Side Selection`, `Restart Game`, `Learner Mode: ON/OFF`, `Coach Voice: ON/OFF`, `Undo Move`), handles startup auto-retry (3 attempts, 2s delay), and executes pre-commit approval flow.
+- **`App.tsx`**: Manages master game state (`gameId`, `fen`, `playerColor`, `warningActive`, `history`, `isRobotThinking`, `isConnecting`). Renders the top navigation bar (`Game Mode`, `Side Selection`, `Restart Game`, `Learner Mode: ON/OFF`, `Coach Voice: ON/OFF`, `Undo Move`), handles startup auto-retry (3 attempts, 2s delay), and executes pre-commit approval flow. Integrates with `useSession` to trigger the paywall (`PaymentOverlay.tsx`) if a non-premium user tries to play.
 - **`ChessBoardArea.tsx`**: Renders the max-sized responsive chessboard grid (`85vh`), handles drag-and-drop & click-to-move input, renders legal destination dots, visual engine arrows, orange-red flash on illegal/pinned moves (`illegalFlashSquare`), and solid red square highlights (`badMoveSquare`) on mistakes.
 - **`CoachOverlay.tsx`**: Renders the pre-commit approval card over the board with 3 standard buttons: 💡 **Hint Box**, ▶️ **Play Anyway**, and 🛡️ **Show Follow Up Moves**.
+- **`PaymentOverlay.tsx`**: Renders the paywall screen. Handles the frontend logic for initiating a Razorpay order via the backend, displaying the Razorpay checkout script, and directly updating the user's `is_premium` status in Supabase upon successful payment.
 - **`coachVoice.ts`**: Web Speech API Text-to-Speech narration layer. Audio lines are 100% synchronized with the committed classification badge in `commitAndFinalize`.
 - **`soundEffects.ts`**: Web Audio API synthesizer for classic wooden piece movement/capture sounds (`playMoveSoundForUci()`).
 - **`chessTranslator.ts`**: Converts SAN notation (e.g. `Nf3`, `exd5`) into natural English with automatic turn-perspective flipping for opponent reply threats.
+
+---
+
+### 2.1b Authentication & Payments Architecture
+
+The application relies on a combination of Supabase and Razorpay to gate gameplay behind a premium paywall.
+
+1. **Authentication**: Users log in via Google OAuth directly from the frontend (`AuthForm.tsx`). Supabase manages the session via JWTs and creates a corresponding record in the `profiles` table via a database trigger.
+2. **Payments (Order Creation)**: When a user clicks to pay, the backend (`/api/payment/create-order`) securely communicates with Razorpay using secret keys to generate an `order_id`.
+3. **Payments (Checkout & Fulfillment)**: The frontend consumes the `order_id` to render the Razorpay popup. Upon a successful transaction, the frontend directly sets `is_premium = true` in Supabase to instantly unlock the game.
 
 ---
 
