@@ -1,44 +1,41 @@
-# Chess Video Generator
+# Smart Chess - AI Mistake Coach
 
-This repository contains a full-stack application dedicated to generating dynamic, fast-paced, "brainrot" style chess puzzle videos using Remotion and React.
+Smart Chess is an interactive, real-time AI-assisted chess application designed to bridge the gap between playing chess and actively improving your game. 
+
+It evaluates moves instantly using Stockfish 16, provides human-perspective feedback (e.g., *Best*, *Mistake*, *Blunder*), and offers an interactive pre-commit approval flow so learners can analyze threats or retry moves before the bot responds.
+
+## Features
+- **Real-Time Stockfish Analysis**: Play against a rating-adjustable Stockfish opponent (1320 - 3190 ELO).
+- **Interactive Move Coaching**: Get immediate feedback on your moves. If you blunder, the game pauses, highlights the mistake, and lets you ask for a hint, see the follow-up punishment, or undo.
+- **Learner Mode**: Visual arrows and square highlights to guide your piece selection.
+- **Voice Narration**: Web Speech API announces your move quality in real-time.
+- **Authentication & Payments**: Integrated with **Supabase (Google Auth)** and **Razorpay** to require a premium unlock before playing.
 
 ## Project Structure
-- **/Frontend**: A Next.js and Remotion application. This handles rendering the chess videos headless-ly.
-- **/Backend**: A Python FastAPI application that connects to a database (or stockfish) to supply random chess puzzles to the frontend.
+- **/Frontend**: A React 18 + TypeScript application built with Vite and Tailwind CSS.
+- **/Backend**: A Python FastAPI application that manages the Stockfish engine and handles Razorpay order generation.
 
-## Video Generation Workflow
+## Setup & Installation
 
-The core feature of this repository is the automated video generation pipeline.
+Please refer to the detailed [Client Setup Guide (Supabase & Razorpay)](supabase_setup_guide.md) for instructions on how to initialize the database and connect your payment keys.
 
-### 1. Start the Backend
-The video generator fetches random puzzles from the backend API.
+### 1. Run the Backend
 ```bash
 cd Backend
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-### 2. Generate a Video
-Once the backend is running, you can automatically generate a high-energy chess video by running the Remotion build script in the Frontend folder.
+### 2. Run the Frontend
 ```bash
 cd Frontend
-npm run remotion:build
+npm install
+npm run dev
 ```
 
-### What Happens During Generation?
-1. **Fetching**: The `build-video.js` script fetches a random puzzle sequence (FEN and UCI moves) from `http://127.0.0.1:8000/api/puzzles/random`.
-2. **Intermediate Storage**: It stores the sequence into a temporary `moves.json` file.
-3. **Rendering**: It triggers `npx remotion render` targeting the `ChessVideo.tsx` component.
-4. **Output**: The video is rendered locally and automatically saved to the `Frontend/public/videos/` directory with a unique timestamp. Windows File Explorer will automatically open this folder upon completion.
-
-### Video Features
-- **Brainrot Pacing**: Each move is paced exactly at 2.0s per move for optimal short-form content retention.
-- **Dynamic Board Highlighting**: Start and end squares of moving pieces are automatically highlighted (Red for the opponent, Blue for the player).
-- **Camera Shake**: A visceral camera shake effect emphasizes blunders early in the video.
-- **Winning Zoom**: The camera dynamically zooms in when the winning move is played alongside a victory sound effect.
-- **Meme Texts**: Displays high-retention hook text ("Bro thought he was winning... 😭" to "NAHHH 💀💀💀").
-
-## Technologies
-- **Remotion**: Programmatic Video Generation
-- **React-Chessboard**: Visual Board Rendering
-- **Chess.js**: Move Validation and Logic
-- **FastAPI**: Puzzle Data Source
+## Documentation
+- [Product Requirements Document (PRD)](prd.md)
+- [Architecture Document](architecture.md)
+- [Supabase & Razorpay Setup Guide](supabase_setup_guide.md)
