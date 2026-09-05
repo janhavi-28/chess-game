@@ -1,0 +1,183 @@
+================================================================================
+SMART CHESS - COMPLETE SUMMARY OF WORK & ARCHITECTURE UPDATES
+================================================================================
+
+1. GRAPH LIBRARY: RECHARTS (^3.10.1)
+--------------------------------------------------------------------------------
+- What is Recharts?
+  * A declarative, React-native data visualization library built on top of
+    SVG and D3 concepts.
+  * Installed via: npm install recharts
+
+- Why Recharts Was Chosen:
+  1. Pure SVG Rendering (Zero Blurriness):
+     Unlike Canvas-based charting engines (e.g., Chart.js) that rasterize into
+     pixels and blur or distort on Retina, 4K, or mobile displays, Recharts
+     creates pure vector SVG nodes that remain razor-sharp at any zoom level.
+  2. Native React 19 / Next.js Integration:
+     Recharts provides standard JSX declarative components (<ResponsiveContainer>,
+     <LineChart>, <Line>, <XAxis>, <YAxis>, <Tooltip>) without manual canvas
+     context hooks or imperative DOM manipulation.
+  3. Dynamic Responsive Auto-Fitting:
+     <ResponsiveContainer width="100%" height="100%"> continuously observes
+     modal container dimensions, smoothly resizing across desktop, tablet, and mobile.
+  4. Interactive Tooltips:
+     Built-in hover tooltips show exact match index, opponent/performance rating,
+     and result status.
+
+- Implementation in Project:
+  * File: Frontend/src/components/StatisticsModal.tsx
+  * Pulls game history from Supabase via api.getUserGames(userId) and chronologically
+    maps it to trajectory points:
+    chartData = [...games].reverse().map((g, idx) => ({
+      name: `Game ${idx + 1}`,
+      rating: g.opponent_rating || 1500,
+      result: g.status
+    }));
+
+
+2. WIN RATE METRIC & GAME STATUS ARCHITECTURE
+--------------------------------------------------------------------------------
+- Is the Win Rate a Placeholder?
+  * NO. The win rate is 100% dynamic and calculated from live database records.
+  * Formula:
+      wins = games.filter(g => g.status === 'win').length
+      losses = games.filter(g => g.status === 'loss').length
+      draws = games.filter(g => g.status === 'draw').length
+      totalCompleted = wins + losses + draws
+      winRate = totalCompleted > 0 ? Math.round((wins / totalCompleted) * 100) : 0
+
+- Are Puzzles Included in the Win Rate Calculation?
+  * NO. Puzzles are completely separate and DO NOT affect the match win rate.
+  * Puzzle Storage: Local SQLite database (Backend/app/data/puzzles2.db).
+  * Puzzle Execution: Managed independently in Python via PuzzleManager.
+  * Puzzles never write to or read from the Supabase "games" table.
+  * The Supabase "games" table exclusively stores "You vs Robot" chess matches.
+
+- Root Cause of the "100% Win Rate" Bug:
+  * The user had not finished any games yet, but the modal showed 100%.
+  * Supabase Investigation: The database had 15 total game rows for the user.
+    - 14 games had status "active" (games started, abandoned, or currently in-progress).
+    - 1 legacy test record (ID: 8c65bdcd-ad32-4f77-af71-b38ba3f33ef0, created Sept 3)
+      had status "win" with 0 moves (move_history: []).
+  * Calculation Result:
+      wins = 1, losses = 0, draws = 0
+      totalCompleted = 1
+      winRate = (1 / 1) * 100 = 100%
+  * Because "active" games were excluded from completed games to avoid counting
+    in-progress games as losses, the single dummy test win caused the win rate
+    to evaluate to 100%.
+
+- Resolution Implemented:
+  1. Database Cleanup: Permanently deleted the 0-move dummy test record (8c65bdcd)
+     from the Supabase "games" table.
+  2. UI Transparency & Fallback Subtitles in StatisticsModal.tsx:
+     - When totalCompleted === 0: Displays "0%" with subtitle "No finished games".
+     - When completed games exist: Displays actual win % with subtitle
+       "${wins}W · ${losses}L · ${draws}D".
+     - Games Played Card: Clarifies match breakdown with subtitle
+       "${totalCompleted} finished · ${totalActive} active" (e.g., "0 finished · 14 active").
+
+
+3. BOARD UI & PROFILE BUTTON CLEANUP
+--------------------------------------------------------------------------------
+- Removal of Duplicate Profile Button Beside the Board:
+  * Issue: A duplicate profile avatar button was placed at the bottom-left corner
+    of the chessboard alongside the board theme palette button.
+  * Fix: Removed the duplicate profile button from the chessboard entirely.
+  * Current Layout:
+    - Chessboard bottom-left corner (-left-12 bottom-0) holds ONLY the board
+      theme Palette button.
+    - Profile access is strictly and cleanly centralized in the top navigation bar.
+
+- Total Games & Continuable Active Games Logic:
+  * Rule: Only games where AT LEAST 1 MOVE was made (pawn or piece moved) are
+    treated as continuable active games. Untouched starting-position boards (0 moves)
+    are not playable or continuable matches.
+  * Database Cleanup: Permanently deleted 7 empty 0-move dummy records from Supabase
+    (leaving only genuine played games with 1 to 9+ moves).
+  * Backend Filtering:
+    - /api/user/games filters out 0-move unplayed active games.
+    - GameManager.new_game() automatically purges previous 0-move untouched records
+      before creating a new game, preventing database table pollution.
+  * Frontend Display:
+    - Recent Games list strictly caps display to the top 7 played games (`slice(0, 7)`).
+    - Total Games and Active count reflect only genuine matches where moves were made.
+
+- Total Games Card Behavior (Profile Modal):
+  * User Feedback: "dont need pressing total games as view analytics is already providing analytics".
+  * Fix: Removed click triggers and hover button styling from the "Total Games" card
+    in ProfileDropdown.tsx. It now serves as a clean, static informational metric card.
+  * The dedicated "View Analytics" button remains the sole action to launch the
+    in-depth Recharts Performance Statistics modal.
+
+
+4. PLAYER PROFILE SYSTEM & PERFORMANCE-TAB STYLING
+--------------------------------------------------------------------------------
+- Player Profile Modal (Frontend/src/components/ProfileDropdown.tsx):
+  * Styled to match the exact aesthetic of the Performance/Analytics tab:
+    dark glassmorphic theme (#111 background, border-zinc-800, backdrop blur,
+    and a top-right X close button).
+  * Privacy Protection: Raw user email is hidden from the UI; only the Player Name
+    is displayed.
+  * Metric Cards: 3-column key metrics grid: Performance Rating (with Trophy icon),
+    Win Rate (with TrendingUp icon and finished match breakdown), and Total Games
+    (with Activity icon and active/finished count).
+  * Direct "View Analytics" action button to open the Recharts statistics modal.
+  * Match History: Displays recent games with interactive mini-chessboards
+    and outcome status badges (Won, Lost, Draw, Active).
+  * Sign Out button.
+
+- Profile Edit Modal (Frontend/src/components/ProfileEditModal.tsx):
+  * Player Name editor with character limit indicator.
+  * Custom photo upload from gallery (auto-compressed on client side to JPEG
+    base64 under 256px, avoiding need for storage buckets).
+  * 12 Chess Piece preset avatar selector.
+
+
+5. CHESS PIECE AVATARS (FIXED "SINGLE BLOCK OF COLOR" BUG)
+--------------------------------------------------------------------------------
+- File: Frontend/src/utils/avatarUtils.tsx
+- Root Cause:
+  * Canvas-based drawing using Unicode emojis (\u2659, \u2658, etc.) failed to
+    render glyphs on Windows canvas environments, drawing only the background
+    circle and exporting a solid block of color.
+- Solution:
+  * Built 100% vector SVG chess pieces for all 12 pieces:
+    White & Black Pawn, Knight, Bishop, Rook, Queen, King (wP, bP, wN, bN,
+    wB, bB, wR, bR, wQ, bQ, wK, bK).
+  * Components: ChessPieceSvg and AvatarImg.
+  * Presets store lightweight tokens like "chess:pawn_w" which render crisp
+    vector graphics across all operating systems, screen densities, and browsers.
+
+
+6. MULTI-TIER PERSISTENCE (FIXED PROFILE RESET ON REFRESH)
+--------------------------------------------------------------------------------
+- Files: Frontend/src/utils/useSession.ts & ProfileEditModal.tsx
+- Root Cause:
+  * On page refresh, the app called http://localhost:8000/api/user/profile.
+  * The backend runs with the Supabase anon public key, so Supabase Row Level
+    Security (RLS) blocked the query (auth.uid() = null). The backend caught
+    the error and returned a default fallback without display_name or avatar_url,
+    overwriting the frontend React state back to default initials ("JA").
+- Solution (Multi-Tier Persistence):
+  1. Supabase Auth User Metadata: Saves to supabase.auth.updateUser(),
+     persisting directly in auth.users and bypassing table RLS restrictions.
+  2. LocalStorage Caching: Synchronously caches profile data under
+     "smartchess_profile_<userId>", ensuring instant zero-latency loading
+     on refresh without any visual flickering or reset.
+  3. Safe Merging in useSession.ts: Directly queries Supabase profiles table
+     using the user's authenticated JWT session, merging with backend stats
+     without overwriting saved names or avatars.
+  4. Auto Pre-population: Edit modal pre-fills currently active name and piece.
+
+
+7. ADDITIONAL SYSTEM ENHANCEMENTS
+--------------------------------------------------------------------------------
+- Custom Board Themes: Classic Wood, Midnight Blue, Emerald Green, Coral,
+  and Obsidian with localStorage persistence.
+- Trial Timer countdown for guest/free users.
+- Backend profile and game endpoints (/api/user/profile, /api/user/games).
+- Centipawn Loss (ACPL) Tactical Rating adjustments documented in performance.txt.
+
+================================================================================

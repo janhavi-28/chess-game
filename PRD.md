@@ -6,7 +6,7 @@
 
 ## 1. Executive Summary & Vision
 
-**Smart Chess** is an interactive, real-time AI-assisted chess application designed to bridge the gap between playing chess and actively improving your game. Unlike traditional chess platforms that only analyze your game after it is finished, Smart Chess acts as a live **AI Mistake Coach**. It evaluates moves instantly using Stockfish 16, provides human-perspective feedback (e.g., *Book*, *Brilliant*, *Best*, *Excellent*, *Good*, *Inaccuracy*, *Mistake*, *Blunder*), highlights problematic moves in red, and offers an interactive pre-commit approval flow (*Play Anyway*, *Hint Box*, *Show Follow Up Moves*) so learners can analyze threats or retry moves before the bot responds.
+**Smart Chess** is an interactive, real-time AI-assisted chess application designed to bridge the gap between playing chess and actively improving your game. Unlike traditional chess platforms that only analyze your game after it is finished, Smart Chess acts as a live **AI Mistake Coach**. It evaluates moves instantly using Stockfish 16, provides human-perspective feedback (e.g., *Book*, *Brilliant*, *Best*, *Excellent*, *Good*, *Inaccuracy*, *Mistake*, *Blunder*), highlights problematic moves in red, and offers an interactive pre-commit approval flow (*Play Anyway*, *Hint Box*, *Show Follow Up Moves*) so learners can analyze threats or retry moves before the bot responds. Additionally, the system continuously analyzes gameplay via Centipawn Loss to calculate the user's Tactical Performance Rating.
 
 ---
 
@@ -94,9 +94,46 @@ Every move played by the user is evaluated against Stockfish thresholds and labe
 - **Auto-Retry Connection**: Frontend attempts up to 3 automatic retries (2-second interval) on startup to connect to the backend.
 - **Interactive Connection Overlay**: If the backend is unreachable, a clean full-board overlay appears with a **🔄 Retry Connection** button instead of failing silently.
 
-### 3.11 User Authentication & Payments
-- **Google / Email Authentication**: Users must sign in via Supabase Auth (Google OAuth or Magic Link) to access their profile and payment status.
-- **Razorpay Premium Paywall**: To actually move a piece and play against the robot, a user must have `is_premium` status. Non-premium users trigger an intercept overlay requesting a ₹1 payment via Razorpay. Upon successful checkout, the database is updated and gameplay is unlocked.
+### 3.11 User Authentication & Payments (3-Minute Free Trial)
+- **3-Minute Free Trial**: Unauthenticated or non-premium users are granted a 3-minute free gameplay trial. During this time, a persistent warning label is displayed (e.g., "You might end the game without login").
+- **Paywall & Restart**: Exactly after 3 minutes, the free trial expires. The game is interrupted and restarts, forcing the user to log in and pay to continue playing or start new full games.
+- **Google Authentication**: Users sign in via Supabase Auth (Google OAuth) to access their profile and payment status.
+- **Razorpay Premium Paywall**: To bypass the 3-minute limit, users must purchase premium status via Razorpay. Upon successful checkout, the database is updated.
+
+### 3.12 Enhanced Player Profile & Analytics System
+- **Player Profile Modal (`ProfileDropdown.tsx`)**:
+  - Dark glassmorphic design (`#111` background, `border-zinc-800`, top-right `X` close button).
+  - Privacy-shielded identity: displays Player Name without exposing raw email addresses.
+  - **3-Metric Key Grid**:
+    1. **Performance Rating**: Trophy icon with dynamic tactical rating.
+    2. **Win Rate**: TrendingUp icon showing live win percentage ($\frac{\text{Wins}}{\text{Completed Matches}} \times 100$) with match outcome breakdown (`${wins}W · ${losses}L · ${draws}D` or `No finished games`).
+    3. **Total Games**: Static informational metric displaying total played games with `${totalCompleted} finished · ${activeGames} active` breakdown.
+  - **Dedicated "View Analytics" Action**: Launches the dedicated Recharts Performance Statistics modal.
+  - **Recent Games Continuation**: Lists up to the top 7 played games with interactive mini `<Chessboard>` thumbnails showing exact final FEN positions to click and resume.
+
+- **Profile Editing & Vector Avatars (`ProfileEditModal.tsx` & `avatarUtils.tsx`)**:
+  - **Display Name Editor**: Allows updating player in-game handle with length validation.
+  - **Photo Upload**: Supports uploading custom photos from device gallery, auto-compressed client-side to base64 JPEG under 256px.
+  - **12 Pure Vector SVG Chess Piece Avatars**: Complete set of 12 crisp vector piece icons (`wP`, `bP`, `wN`, `bN`, `wB`, `bB`, `wR`, `bR`, `wQ`, `bQ`, `wK`, `bK`), eliminating canvas/emoji rendering glitches on Windows and high-DPI displays.
+  - **Multi-Tier Persistence (`useSession.ts`)**: Saves profile data simultaneously to Supabase Auth user metadata (`supabase.auth.updateUser`), `public.profiles` table upsert, and synchronous `localStorage` caching (`smartchess_profile_<userId>`), guaranteeing zero profile resets on browser refresh.
+
+- **Custom Board Themes (`BoardThemeSelector.tsx`)**:
+  - Theme Palette button positioned cleanly beside the white rook at the bottom-left corner of the chessboard (`-left-12 bottom-0`).
+  - Supports 5 curated themes: Classic Wood, Midnight Blue, Emerald Green, Coral, and Obsidian with instant `localStorage` persistence.
+
+- **Performance Trajectory Chart (`StatisticsModal.tsx`)**:
+  - Powered by **Recharts (^3.10.1)** with pure vector SVG line charts.
+  - Features dynamic responsive auto-fitting (`<ResponsiveContainer>`), subtle grid styling, and interactive hover tooltips displaying match index, opponent rating, and game outcome.
+
+### 3.13 Match Continuation & Played Game Threshold
+- **0-Move Filter**: Only games where **at least 1 move was made** (pawn or piece moved) are counted in Total Games and listed in Recent Games.
+- **Auto-Cleanup**: Untouched starting-board sessions (0 moves) are automatically cleaned up from the database on new game creation and filtered out from API responses.
+- **Top 7 Continuable Games**: Recent Games list strictly caps display to the 7 most recent played games for clean, focused continuation.
+- **Puzzles Decoupling**: Tactical puzzles are stored in local SQLite (`puzzles2.db`) and never interfere with match win rates or Supabase game tables.
+
+### 3.14 Dynamic Player Rating Prediction
+- **Analytics Engine**: The backend continuously analyzes player moves, comparing accuracy and centipawn loss against Stockfish best moves.
+- **Predicted ELO**: Based on performance history, the system calculates and displays a dynamic "Predicted Player Rating" that updates as games are completed.
 
 ---
 
@@ -105,19 +142,22 @@ Every move played by the user is evaluated against Stockfish thresholds and labe
 ### 4.1 Technology Stack
 
 - **Frontend**:
-  - Framework: **React 18** + **TypeScript**
-  - Build Tool: **Vite**
-  - Styling: **Tailwind CSS** (Dark Mode Theme) + Vanilla CSS Overrides
+  - Framework: **Next.js 15 (App Router)** + **React 19** + **TypeScript**
+  - Styling: **Tailwind CSS** (Dark Theme) + Vanilla CSS
+  - Charting Engine: **Recharts (^3.10.1)** (Vector SVG)
   - Chess Board Render: **`react-chessboard`**
   - Game Logic Utilities: **`chess.js`**
   - Audio & Voice: **Web Audio API Synthesizer** + **Web Speech API TTS**
   - Icons: **Lucide React**
+  - Backend Client: Supabase JS Client & Native Fetch REST API
 
 - **Backend**:
-  - Framework: **FastAPI** (Python 3.10+)
-  - Server: **Uvicorn** (Asynchronous ASGI)
+  - Framework: **FastAPI** (Python 3.12)
+  - Server: **Uvicorn** (Asynchronous ASGI with WatchFiles reload)
   - Engine Wrapper: **`python-chess`**
-  - Chess Engine: **Stockfish 16** (Windows `.exe` / Linux x86_64 binary)
+  - Chess Engine: **Stockfish 16.1** (Windows `.exe` / Linux x86_64 binary)
+  - Database: **Supabase PostgreSQL** (`supabase-py` client) + **SQLite** (`puzzles2.db`)
+  - Payments: **Razorpay Python SDK**
 
 ### 4.2 Folder Structure
 
@@ -125,37 +165,54 @@ Every move played by the user is evaluated against Stockfish thresholds and labe
 Smart_Chess/
 ├── PRD.md
 ├── ARCHITECTURE.md
+├── summary.txt
+├── performance.txt
 ├── Backend/
 │   ├── app/
-│   │   ├── main.py            # FastAPI endpoints (/api/game, /api/move/commit, /api/game/undo)
-│   │   ├── engine.py          # Stockfish process wrapper, 1.5s time cap & safe analysis
-│   │   ├── classifier.py      # Move classification & CP loss math
-│   │   ├── game_manager.py    # Game state memory, move history, & stack undo
-│   │   └── schemas.py         # Pydantic request/response schemas
+│   │   ├── main.py            # FastAPI endpoints (/api/game, /api/user, /api/puzzles)
+│   │   ├── engine.py          # Stockfish UCI wrapper with 30s timeout & automatic retry
+│   │   ├── classifier.py      # Centipawn loss classification & opening book
+│   │   ├── game_manager.py    # Game session state, move commit, undo & 0-move cleanup
+│   │   ├── analytics.py       # ACPL-based tactical rating adjustment algorithms
+│   │   ├── puzzle_manager.py  # SQLite puzzle loader and evaluation manager
+│   │   └── schemas.py         # Pydantic request & response models
+│   ├── data/
+│   │   └── puzzles2.db        # SQLite puzzle dataset (ratings 600-2600)
+│   ├── stockfish.exe          # Stockfish 16.1 engine binary
 │   └── requirements.txt
 ├── Frontend/
 │   ├── src/
+│   │   ├── app/
+│   │   │   ├── layout.tsx     # Root Next.js layout
+│   │   │   ├── page.tsx       # Root page mounting ChessApp
+│   │   │   └── globals.css    # Dark mode & custom scrollbar styling
 │   │   ├── components/
-│   │   │   ├── ChessBoardArea.tsx  # Max-sized board rendering, illegal move flash & arrows
-│   │   │   ├── CoachOverlay.tsx    # Pre-commit approval card & action buttons
-│   │   │   └── MoveLog.tsx         # Verbose English move log & classification badges
+│   │   │   ├── ChessApp.tsx            # Master application state & top navigation
+│   │   │   ├── ChessBoardArea.tsx      # Max-sized responsive board & arrow overlays
+│   │   │   ├── BoardThemeSelector.tsx  # Board theme palette selector
+│   │   │   ├── CoachOverlay.tsx        # Pre-commit warning card & action buttons
+│   │   │   ├── ProfileDropdown.tsx     # 3-metric profile modal & recent games list
+│   │   │   ├── ProfileEditModal.tsx    # Player name editor & avatar selector
+│   │   │   ├── StatisticsModal.tsx     # Recharts SVG rating trajectory modal
+│   │   │   ├── MoveLog.tsx             # Verbose move history & badges
+│   │   │   └── TrialTimer.tsx          # 3-minute guest trial countdown
 │   │   ├── services/
-│   │   │   └── api.ts              # REST API client
-│   │   ├── utils/
-│   │   │   ├── chessTranslator.ts  # SAN to verbose English translator
-│   │   │   ├── soundEffects.ts     # Web Audio API sound synthesizer
-│   │   │   └── coachVoice.ts       # Web Speech API TTS voice narration
-│   │   ├── App.tsx                 # Master application state, header controls & retry loop
-│   │   └── index.css               # Global CSS & dark theme styling
+│   │   │   └── api.ts                  # REST API client with auto-retry
+│   │   └── utils/
+│   │       ├── avatarUtils.tsx         # 12 pure vector SVG chess pieces
+│   │       ├── useSession.ts           # Multi-tier profile persistence hook
+│   │       ├── chessTranslator.ts      # SAN to verbose English translator
+│   │       ├── soundEffects.ts         # Web Audio API sound synthesizer
+│   │       └── coachVoice.ts           # Web Speech API TTS voice narration
 │   ├── package.json
-│   └── vite.config.ts
-└── vercel.json                     # Vercel Serverless deployment config
+│   └── next.config.ts
 ```
 
 ---
 
-## 5. Deployment Strategy (Vercel Ready)
+## 5. Deployment Strategy
 
-The project is structured for single-repo Vercel deployment:
-- **Frontend**: Deployed as Vite static SPA on Vercel CDN.
-- **Backend**: Deployed as a Python Serverless Function (`api/index.py`) using `vercel.json` with a Linux x86_64 Stockfish binary or JS Stockfish fallback.
+The application is designed for independent, decoupled deployment:
+- **Frontend**: Hosted on **Vercel** or any Next.js edge platform for global low-latency CDN delivery.
+- **Backend**: Hosted on a dedicated Linux VPS or container platform (**Render**, **Railway**, **AWS**, or **DigitalOcean**) with full CPU core access for Stockfish UCI processing.
+- **Database**: Cloud-hosted **Supabase PostgreSQL** with automated JWT-based Row Level Security.

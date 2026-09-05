@@ -5,6 +5,8 @@ from typing import Dict, Optional
 
 from .engine import StockfishEngine
 from .classifier import MoveClassifier, WARN_LABELS, BOX_LABELS
+from supabase import Client
+import json
 
 
 class Game:
@@ -14,6 +16,7 @@ class Game:
         self.opponent_rating = opponent_rating
         self.last_precheck_move_uci = None
         self.last_precheck_classification = None
+        self.user_id = None
 
     @property
     def next_ply(self) -> int:
@@ -22,22 +25,75 @@ class Game:
 
 
 class GameManager:
-    def __init__(self, engine: StockfishEngine, opponent_engine: StockfishEngine, classifier: MoveClassifier):
+    def __init__(self, engine: StockfishEngine, opponent_engine: StockfishEngine, classifier: MoveClassifier, supabase: Client = None):
         self.engine = engine
         self.opponent_engine = opponent_engine
         self.classifier = classifier
+        self.supabase = supabase
         self.games: Dict[str, Game] = {}
 
     # -- lifecycle -----------------------------------------------------
-    def new_game(self, starting_fen: Optional[str] = None, opponent_rating: Optional[int] = 1500) -> str:
+    def new_game(self, starting_fen: Optional[str] = None, opponent_rating: Optional[int] = 1500, user_id: str = None) -> str:
         game_id = str(uuid.uuid4())
-        self.games[game_id] = Game(starting_fen, opponent_rating)
+        game = Game(starting_fen, opponent_rating)
+        game.user_id = user_id
+        self.games[game_id] = game
+        
+        if self.supabase and user_id:
+            try:
+                # Clean up previous unplayed (0-move) active games for this user to prevent empty starting-board clutter
+                prev_active = self.supabase.table("games").select("id, move_history").eq("user_id", user_id).eq("status", "active").execute()
+                for pg in (prev_active.data or []):
+                    if not pg.get("move_history") or len(pg["move_history"]) == 0:
+                        self.supabase.table("games").delete().eq("id", pg["id"]).execute()
+
+                self.supabase.table("games").insert({
+                    "id": game_id,
+                    "user_id": user_id,
+                    "fen": game.board.fen(),
+                    "status": "active",
+                    "opponent_rating": opponent_rating
+                }).execute()
+            except Exception as e:
+                print(f"Error saving game to DB: {e}")
+                
         return game_id
 
     def get_game(self, game_id: str) -> Game:
         if game_id not in self.games:
+            # Attempt to load from DB
+            if self.supabase:
+                try:
+                    res = self.supabase.table("games").select("*").eq("id", game_id).single().execute()
+                    if res.data:
+                        game = Game(res.data["fen"], res.data.get("opponent_rating", 1500))
+                        game.user_id = res.data["user_id"]
+                        game.move_history = res.data.get("move_history", [])
+                        self.games[game_id] = game
+                        return game
+                except Exception as e:
+                    print(f"Error loading game {game_id} from DB: {e}")
             raise KeyError("Game not found")
         return self.games[game_id]
+
+    def resume_game(self, user_id: str) -> dict:
+        if not self.supabase:
+            raise ValueError("Database not configured")
+        
+        # Find latest active game for user
+        res = self.supabase.table("games").select("*").eq("user_id", user_id).eq("status", "active").order("updated_at", desc=True).limit(1).execute()
+        if not res.data:
+            raise KeyError("No active game found")
+            
+        db_game = res.data[0]
+        game_id = db_game["id"]
+        
+        game = Game(db_game["fen"], db_game.get("opponent_rating", 1500))
+        game.user_id = user_id
+        game.move_history = db_game.get("move_history", [])
+        self.games[game_id] = game
+        
+        return self.get_state(game_id)
 
     def get_robot_move(self, game_id: str) -> dict:
         # Note: opponent_engine is a single shared instance. If this ever needs to
@@ -120,12 +176,33 @@ class GameManager:
             "fen_before": board.fen(),
         })
 
+        is_over = board.is_game_over()
+        if self.supabase and game.user_id:
+            try:
+                new_status = "active"
+                if is_over:
+                    res = board.result()
+                    if res == "1-0":
+                        new_status = "win"
+                    elif res == "0-1":
+                        new_status = "loss"
+                    else:
+                        new_status = "draw"
+
+                self.supabase.table("games").update({
+                    "fen": board.fen(),
+                    "move_history": game.move_history,
+                    "status": new_status
+                }).eq("id", game_id).execute()
+            except Exception as e:
+                print(f"Error updating game DB: {e}")
+
         return {
             "fen": board.fen(),
             "san": san,
             "classification": classification["label"],
-            "is_game_over": board.is_game_over(),
-            "result": board.result() if board.is_game_over() else None,
+            "is_game_over": is_over,
+            "result": board.result() if is_over else None,
         }
 
     def undo_last_move(self, game_id: str, plies: int = 2) -> dict:
@@ -139,6 +216,17 @@ class GameManager:
                 game.board.pop()
             if len(game.move_history) > 0:
                 game.move_history.pop()
+                
+        if self.supabase and game.user_id:
+            try:
+                self.supabase.table("games").update({
+                    "fen": game.board.fen(),
+                    "move_history": game.move_history,
+                    "status": "active"
+                }).eq("id", game_id).execute()
+            except Exception as e:
+                print(f"Error updating game DB on undo: {e}")
+                
         return self.get_state(game_id)
 
     def get_state(self, game_id: str) -> dict:
@@ -153,6 +241,7 @@ class GameManager:
             "is_game_over": board.is_game_over(),
             "result": board.result() if board.is_game_over() else None,
             "move_history": game.move_history,
+            "opponent_rating": getattr(game, 'opponent_rating', 1500),
         }
 
     @staticmethod

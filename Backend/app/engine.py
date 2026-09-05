@@ -11,10 +11,18 @@ on your PATH (e.g. STOCKFISH_PATH=/usr/games/stockfish).
 """
 
 import os
+import sys
+import asyncio
 import chess
 import chess.engine
 from pathlib import Path
 from typing import List, Optional
+
+if sys.platform == 'win32':
+    try:
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    except Exception:
+        pass
 
 def _find_stockfish() -> str:
     """Return STOCKFISH_PATH env var if set, otherwise look for stockfish.exe
@@ -42,23 +50,43 @@ import threading
 
 class StockfishEngine:
     def __init__(self, path: str = STOCKFISH_PATH, depth: int = 14,
-                 threads: int = 2, hash_mb: int = 128):
+                 threads: int = 2, hash_mb: int = 128, timeout: float = 30.0):
         self.path = path
         self.depth = depth
         self.threads = threads
         self.hash_mb = hash_mb
+        self.timeout = timeout
         self.lock = threading.Lock()
+        self.engine = None
         self._start_engine()
 
     def _start_engine(self):
-        try:
-            self.engine = chess.engine.SimpleEngine.popen_uci(self.path)
-            self.engine.configure({"Threads": self.threads, "Hash": self.hash_mb})
-        except FileNotFoundError as e:
-            raise RuntimeError(
-                f"Could not find Stockfish binary at '{self.path}'. "
-                f"Install Stockfish and/or set the STOCKFISH_PATH env var."
-            ) from e
+        import time
+        last_err = None
+        for attempt in range(3):
+            try:
+                self.engine = chess.engine.SimpleEngine.popen_uci(self.path, timeout=self.timeout)
+                self.engine.configure({"Threads": self.threads, "Hash": self.hash_mb})
+                return
+            except FileNotFoundError as e:
+                raise RuntimeError(
+                    f"Could not find Stockfish binary at '{self.path}'. "
+                    f"Install Stockfish and/or set the STOCKFISH_PATH env var."
+                ) from e
+            except Exception as e:
+                last_err = e
+                print(f"Warning: Stockfish startup attempt {attempt + 1}/3 failed ({e}). Retrying in 1s...")
+                time.sleep(1.0)
+        raise RuntimeError(f"Could not start Stockfish binary at '{self.path}': {last_err}") from last_err
+
+    def close(self):
+        with self.lock:
+            if self.engine:
+                try:
+                    self.engine.quit()
+                except Exception:
+                    pass
+                self.engine = None
 
     def set_strength(self, elo: Optional[int]):
         """Limit this engine instance's playing strength to the given Elo

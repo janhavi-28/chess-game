@@ -31,6 +31,7 @@ if sys.platform == 'win32':
 from .engine import StockfishEngine
 from .classifier import MoveClassifier
 from .game_manager import GameManager
+from .analytics import calculate_rating_adjustment
 from .schemas import (
     NewGameRequest, PreMoveCheckRequest, PreMoveCheckResponse,
     CommitMoveRequest, CommitMoveResponse, GameStateResponse,
@@ -52,7 +53,7 @@ async def lifespan(app: FastAPI):
     engine = StockfishEngine(depth=14)
     opponent_engine = StockfishEngine(depth=14)
     classifier = MoveClassifier(engine)
-    manager = GameManager(engine, opponent_engine, classifier)
+    manager = GameManager(engine, opponent_engine, classifier, supabase=supabase)
     yield
     engine.close()
     opponent_engine.close()
@@ -70,7 +71,7 @@ app.add_middleware(
 
 @app.post("/api/game/new")
 def new_game(req: NewGameRequest):
-    game_id = manager.new_game(req.starting_fen, req.opponent_rating)
+    game_id = manager.new_game(req.starting_fen, req.opponent_rating, req.user_id)
     return manager.get_state(game_id)
 
 
@@ -111,7 +112,26 @@ def commit_move(req: CommitMoveRequest):
     """Call this once the player has confirmed they want to play the move
     (whether or not they heeded the warning)."""
     try:
-        return manager.commit_move(req.game_id, req.move_uci)
+        res = manager.commit_move(req.game_id, req.move_uci)
+        
+        # Check if game over to update rating
+        if res["is_game_over"]:
+            game = manager.get_game(req.game_id)
+            if game.user_id:
+                try:
+                    # Fetch current rating
+                    prof = supabase.table("profiles").select("predicted_rating").eq("id", game.user_id).single().execute()
+                    current_rating = prof.data.get("predicted_rating", 1500) if prof.data else 1500
+                    
+                    # Calculate new rating
+                    new_rating = calculate_rating_adjustment(current_rating, game.move_history)
+                    
+                    # Update DB
+                    supabase.table("profiles").update({"predicted_rating": new_rating}).eq("id", game.user_id).execute()
+                except Exception as e:
+                    print(f"Error updating rating: {e}")
+                    
+        return res
     except KeyError:
         raise HTTPException(404, "Game not found")
     except ValueError as e:
@@ -142,6 +162,54 @@ def robot_move(game_id: str):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.get("/api/game/resume")
+def resume_game(user_id: str):
+    try:
+        return manager.resume_game(user_id)
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+@app.get("/api/user/profile")
+def user_profile(user_id: str):
+    print(f"Fetching user profile for {user_id}")
+    try:
+        # Get profile data
+        try:
+            prof = supabase.table("profiles").select("*").eq("id", user_id).single().execute()
+            data = prof.data if prof.data else {}
+        except Exception as e:
+            # If profile doesn't exist yet, we'll just return a default
+            data = {"id": user_id, "predicted_rating": 1500}
+        
+        # Get games played this week (active or completed)
+        try:
+            games_res = supabase.table("games").select("id", count="exact").eq("user_id", user_id).execute()
+            total_games = games_res.count if hasattr(games_res, 'count') and games_res.count is not None else len(games_res.data)
+        except Exception:
+            total_games = 0
+            
+        data["total_games"] = total_games
+        return data
+    except Exception as e:
+        print(f"Error in user_profile: {e}")
+        raise HTTPException(500, str(e))
+
+@app.get("/api/user/games")
+def user_games(user_id: str):
+    try:
+        res = supabase.table("games").select("id, status, opponent_rating, created_at, fen, move_history").eq("user_id", user_id).order("created_at", desc=True).limit(50).execute()
+        # Only include played games (completed, or active with at least 1 move made)
+        valid_games = [
+            g for g in (res.data or [])
+            if (g.get("status") in ("win", "loss", "draw")) or (g.get("move_history") and len(g.get("move_history")) > 0)
+        ]
+        return {"games": valid_games}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
 
 
 @app.post("/api/puzzles/start")

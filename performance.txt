@@ -1,0 +1,19 @@
+Traditional Method (Standard Elo System)
+========================================
+- How it works: Your rating changes based STRICTLY on the final result of the game (Win, Loss, or Draw).
+- Opponent dependent: The amount of points you win or lose depends entirely on the opponent's rating. Beating a strong player gives you more points than beating a weak player.
+- Flaws for learning: You could play an incredibly sloppy game full of blunders, but if your opponent makes a worse blunder and you win, your rating still goes up. Conversely, you could play a brilliant tactical masterpiece but lose due to time, and your rating will drop. It judges the result, not the quality of your moves.
+
+Our Method (AI-Driven Tactical Performance Rating)
+==================================================
+- How it works: Your rating changes based on the QUALITY and ACCURACY of every single move you make, evaluated by a Grandmaster-level AI (Stockfish).
+- Centipawn Loss (CP Loss): Every move you play is compared to the absolute perfect move on the board.
+   * If you play the best move, CP Loss = 0.
+   * Minor inaccuracy = Small CP Loss.
+   * Major blunder = Huge CP Loss.
+- True skill reflection: At the end of the game, the system calculates your Average Centipawn Loss (ACPL).
+   * 0–15 ACPL (Grandmaster Level): +15 Rating Points
+   * 15–30 ACPL (Master Level): +5 Rating Points
+   * 30–50 ACPL (Club Player): -5 Rating Points
+   * 50+ ACPL (Beginner Level): -15 Rating Points
+- Benefits for learning: Your rating is a pure reflection of how well you actually played. Even if you lose a game, if your moves were highly accurate and tactical, your rating won't plummet. It forces you to focus on making the best tactical decisions rather than just "getting lucky" and winning.
