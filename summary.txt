@@ -180,4 +180,55 @@ SMART CHESS - COMPLETE SUMMARY OF WORK & ARCHITECTURE UPDATES
 - Backend profile and game endpoints (/api/user/profile, /api/user/games).
 - Centipawn Loss (ACPL) Tactical Rating adjustments documented in performance.txt.
 
+
+8. SAVAGE 18+ ROAST MODE
+--------------------------------------------------------------------------------
+- Files: Frontend/src/data/roastDialogues.ts, coachVoice.ts, ChessApp.tsx
+- Savage, unfiltered trash-talk commentary matrix for adult players (18+).
+- Short, punchy lines (3-8 words), aggressive humorous delivery, zero emojis.
+- Non-repeating in-memory shuffle buffer across 10 distinct game state categories
+  (Major Blunders, Mistakes, Inaccuracies, Good Moves, Pre-Move Warnings, Undo,
+  Checkmates, Stalemate, Slow Play >45s).
+- Distinct crimson red visual aesthetic with animated flame toggle badges.
+
+
+9. CLEAN BIRTH YEAR COLLECTION & AGE GATE POLICY
+--------------------------------------------------------------------------------
+- Files: Frontend/src/components/AuthForm.tsx, ProfileEditModal.tsx, useSession.ts
+- Standard 4-digit Birth Year input collected on signup and saved to Supabase
+  `profiles.birth_year`.
+- Removed deterrence labels ("For 18+ game modes") to ensure welcoming,
+  frictionless user onboarding.
+- Automated age validation: users under 18 receive an advisory notice if attempting
+  to enable 18+ Roast Mode.
+
+
+10. DIRECT POST-SIGNUP PAYMENT CHECKOUT & WEBHOOK FULFILLMENT
+--------------------------------------------------------------------------------
+- Files: Backend/app/main.py, Frontend/src/components/ChessApp.tsx, PaymentOverlay.tsx
+- Smooth post-registration flow: directly opens Razorpay checkout upon account
+  creation (`onAuthenticated(userId)`) without intermediate dead-ends.
+- Removed redundant "(Test Mode) Skip Payment" bypass button from PaymentOverlay.
+- Implemented `POST /api/payment/webhook` with HMAC SHA-256 signature verification
+  via `x-razorpay-signature` and `RAZORPAY_WEBHOOK_SECRET`.
+- Automatically sets `is_premium = True` in Supabase `profiles` on `payment.captured`
+  and `order.paid` events.
+- Administrative bypass support for `janhavikolekar280@gmail.com`.
+
+
+11. MOVE CLASSIFICATION THRESHOLDS & DYNAMIC SAFE ARROWS (1–3 MOVES)
+--------------------------------------------------------------------------------
+- Files: Backend/app/classifier.py, Backend/app/main.py, Frontend/src/components/ChessApp.tsx
+- Updated Centipawn Loss (CP Loss) Classification Thresholds:
+  * Good: loss <= 40
+  * Inaccuracy: loss 41 to 90
+  * Mistake: loss 91 to 180
+  * Blunder: loss 181 to 350
+  * Worst Move: loss > 350
+- Dynamic 1–3 Safe Move Suggestions:
+  * Stockfish engine evaluates top 5 candidate lines and filters moves with `cp_loss <= 40`.
+  * Renders 1, 2, or 3 green arrows depending on valid safe moves in the position.
+  * Eliminates contradictory advice: hint arrows never point to inaccuracies or blunders.
+  * Pre-move pending warnings suppress green arrows to the player's attempted blunder move.
+
 ================================================================================

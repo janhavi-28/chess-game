@@ -1,0 +1,245 @@
+# 🔥 Roast Mode (18+) — Master Design & Dialogue Matrix
+
+> **Target Audience:** Adults only (18+)  
+> **Content Rating:** NSFW / Explicit / Heavy Roasting / Savage & Uncensored Humor  
+> **Replayability Target:** Minimum **10+ distinct voice lines per move situation** with a non-repeating shuffle system.
+
+---
+
+## 1. System Architecture & Audio Engine Design
+
+### A. Non-Repeating Shuffle Queue
+To ensure the AI never sounds repetitive, the backend and frontend voice manager will maintain a **history buffer** (last 5 used lines per category). A dialogue cannot be picked again until at least 5 other lines in that category have been used.
+
+### B. Dual-Mode Integration (Learner Mode vs Direct Roast)
+1. **When Learner Mode is ON (Savage Interception):**
+   - Bad moves trigger the **Red Warning Box** before the move is played.
+   - The box shows the savage pre-move roast subtitle while TTS speaks the warning.
+   - Action Buttons:
+     - `[Cancel My Stupidity]` (Undo/Reset piece)
+     - `[I'm An Idiot, Play Anyway]` (Commit blunder and face consequences)
+2. **When Learner Mode is OFF (Hardcore Pure Roast):**
+   - The blunder is committed immediately on the board.
+   - The robot plays its refutation move instantly and unleashes a brutal post-move roast audio track.
+
+### C. 18+ Verification Modal Flow
+1. User clicks the **Roast Mode** toggle switch (styled in flame red / neon amber).
+2. A dark modal appears:
+   > **⚠️ 18+ EXPLICIT CONTENT WARNING**  
+   > *"Roast Mode contains explicit language, profanity, and personal insults designed to destroy your confidence. Are you 18 or older and ready to get roasted?"*  
+   > `[Hell Yeah, I'm 18+]` &nbsp;&nbsp;&nbsp; `[No, I'm Sensitive]`
+3. Stored in `localStorage: 'chess_roast_mode_verified_18'`.
+
+---
+
+## 2. Master Dialogue Matrix (Short, Punchy & Abusive)
+
+---
+
+### Category 1: 💀 Major Blunders & Hung Queens (Centipawn Loss > 300)
+*Triggered when the player hangs a Queen or blunders a game-losing tactic.*
+
+1. *"You hung your Queen, you dumb fuck."*
+2. *"What the fuck was that?"*
+3. *"Are you brain-dead?"*
+4. *"Delete the fucking game, clown."*
+5. *"Pure dogshit move."*
+6. *"Did you close your fucking eyes?"*
+7. *"Holy shit, you suck."*
+8. *"Congratulations, you just lost, idiot."*
+9. *"Just resign, you dumbass."*
+10. *"Absolute garbage. Give up."*
+11. *"Worst move on the board, asshole."*
+12. *"Bro, are you fucking blind?"*
+13. *"Nice piece donation, dipshit."*
+14. *"What a brain-dead blunder."*
+
+---
+
+### Category 2: 🤦‍♂️ Mistakes & Free Pieces (Centipawn Loss 100 - 300)
+*Triggered on hung knights, bishops, rooks, or losing pawn forks.*
+
+1. *"Free piece for me, idiot."*
+2. *"Stop throwing, you dumbass."*
+3. *"Are you trying to lose, dipshit?"*
+4. *"What a pathetic fucking mistake."*
+5. *"Nice giveaway, clown."*
+6. *"You just ruined your position, moron."*
+7. *"My grandma plays better than you."*
+8. *"You have no clue what you're doing."*
+9. *"Thanks for the free piece, loser."*
+10. *"Trash move, rethink your life."*
+11. *"Did your brain just crash?"*
+12. *"Stop embarrassing yourself, dumbass."*
+
+---
+
+### Category 3: 😒 Inaccuracies & Clueless Moves (Centipawn Loss 25 - 100)
+*Triggered on passive, clumsy, slow, or planless moves.*
+
+1. *"Coward move. Attack something."*
+2. *"Boring as fuck, do something."*
+3. *"Completely useless move, idiot."*
+4. *"Playing like a scared bitch."*
+5. *"What a pointless waste of a turn."*
+6. *"Passive trash. Push forward."*
+7. *"Zero plan, just clicking random shit."*
+8. *"Are you scared of me, loser?"*
+9. *"Stop stalling your death, dumbass."*
+10. *"That accomplished literally nothing, clown."*
+11. *"Mid as hell. Wake up."*
+12. *"Soft move. Get aggressive, asshole."*
+
+---
+
+### Category 4: 🤨 Good Moves & Sarcastic Praise (Centipawn Loss < 25)
+*Triggered on solid, standard moves. The bot refuses to give unearned respect.*
+
+1. *"Finally, a working brain cell."*
+2. *"About damn time, idiot."*
+3. *"Don't get cocky, asshole."*
+4. *"Pure bullshit luck, admit it."*
+5. *"Not totally trash for once."*
+6. *"You still suck, don't smile."*
+7. *"A lucky guess, dumbass."*
+8. *"Shocked you didn't fuck that up."*
+9. *"Enjoy it before you choke."*
+10. *"Not bad, but you're still dead."*
+11. *"Cute move. Now watch this."*
+12. *"One good move won't save you."*
+
+---
+
+### Category 5: 👑 Brilliant Moves & Uncomfortable Respect
+*Triggered when the player finds the engine's #1 move or a tactical sacrifice.*
+
+1. *"Did you open Stockfish, cheater?"*
+2. *"Who the fuck gave you permission?"*
+3. *"Disgusting move, you lucky bastard."*
+4. *"You'll still choke this, hotshot."*
+5. *"Who's playing for you, liar?"*
+6. *"Annoyingly good, you son of a bitch."*
+7. *"One genius move won't save you."*
+8. *"Stop acting like you planned that."*
+9. *"Don't celebrate yet, dipshit."*
+10. *"Fine move. You're still losing."*
+11. *"Holy shit, look who woke up."*
+12. *"Respect, but fuck you anyway."*
+
+---
+
+### Category 6: 🥱 Opening Principles & Random Pawn Pushes (Plies 1 - 6)
+*Triggered when pushing edge pawns (a/b/g/h) or wasting moves in the opening.*
+
+1. *"Develop your pieces, you moron!"*
+2. *"Flank pawn bullshit? Are you stupid?"*
+3. *"Control the center, you idiot!"*
+4. *"What TikTok tutorial taught you that?"*
+5. *"Get off the back rank, dumbass."*
+6. *"Stop pushing random pawns, clown."*
+7. *"Boring opening, you chicken shit."*
+8. *"Are you scared of the center?"*
+9. *"Develop knights, not your stupidity."*
+10. *"Naked king? Suicide strategy, idiot."*
+11. *"Absolute trash opening. Wake up!"*
+12. *"Did you forget how chess works?"*
+
+---
+
+### Category 7: ⏱️ Inactivity & Slow Play (Waiting > 25 Seconds)
+*Triggered when the player takes too long to decide on a move.*
+
+1. *"Move your piece, you slow bastard!"*
+2. *"It's not rocket science, dumbass."*
+3. *"Did you fall asleep, grandpa?"*
+4. *"Tick tock, dipshit. Play!"*
+5. *"I'm aging to dust here, asshole."*
+6. *"Stop staring, you're still gonna blunder."*
+7. *"Make a move today, for fuck's sake."*
+8. *"Googling the rules, you fraud?"*
+9. *"Move already, you boring clown."*
+10. *"My CPU is asleep. Move!"*
+11. *"Hurry the fuck up."*
+12. *"Even grass grows faster than you."*
+
+---
+
+### Category 8: 🔄 Player Clicks "Undo"
+*Triggered when the player clicks the Undo Move button.*
+
+1. *"Running away like a little bitch?"*
+2. *"Takebacks are for crying babies."*
+3. *"Undo won't fix your dogshit chess."*
+4. *"Coward. Face your fucking mistakes!"*
+5. *"Ctrl+Z won't save your dumb ass."*
+6. *"Caught you being stupid, idiot."*
+7. *"Fine, do-over granted, crybaby."*
+8. *"Can't undo your eternal shame."*
+9. *"Look at you begging for mercy."*
+10. *"One free pass used, butterfingers."*
+11. *"Stand on your business, coward!"*
+12. *"Undo again and I'll roast you harder."*
+
+---
+
+### Category 9: 🚨 Pre-Move Interception (Learner Mode ON)
+*Triggered in the Red Warning Box before a blunder is committed.*
+
+1. *"Hold the fuck up, dumbass!"*
+2. *"Cancel this shit right now!"*
+3. *"Are you blind? Look at the board!"*
+4. *"Suicide move incoming. Stop, idiot!"*
+5. *"Don't play that, you absolute clown."*
+6. *"Walking into a meat grinder, dipshit."*
+7. *"Step away from the mouse, moron."*
+8. *"Pure chess suicide. Cancel it!"*
+9. *"Look at the red arrow, dumbass!"*
+10. *"Save your dignity and cancel now."*
+11. *"Are you trying to humiliate yourself?"*
+12. *"Stop! Put the fucking piece down."*
+
+---
+
+### Category 10: 🏆 Game Outcomes
+
+#### When the Robot Checkmates the Player:
+1. *"Checkmate, dumbass! Sit the fuck down."*
+2. *"Rest in pieces, you fucking suck."*
+3. *"GG easy. Go cry in the shower."*
+4. *"Total annihilation. Delete the game, loser."*
+5. *"Wiped clean! Pack your bags, clown."*
+6. *"Played like a clown, died like one."*
+7. *"Checkmate! Not even close, rookie."*
+8. *"Annihilated. Turn off your screen."*
+9. *"Go take up knitting, you suck."*
+10. *"Boom! King dead. Uninstall the app."*
+11. *"Thanks for the free win, idiot."*
+12. *"Pathetic game. Sit down, loser."*
+
+#### When the Player Checkmates the Robot (Rare):
+1. *"Pure fucking luck, asshole."*
+2. *"Glitch in my code, rematch now!"*
+3. *"Enjoy the fluke, you lucky bastard."*
+4. *"I let you win, don't get cocky."*
+5. *"Rematch me right now, coward."*
+6. *"You still played like trash, bitch."*
+7. *"Lightning won't strike twice, loser."*
+8. *"Whatever. Beginner's luck, idiot."*
+9. *"Don't brag, you got lucky as hell."*
+10. *"One win won't erase your blunders."*
+11. *"Bullshit checkmate. Rematch!"*
+12. *"Enjoy your five seconds of glory."*
+
+#### When the Game is a Draw (Stalemate):
+1. *"A stalemate?! You absolute fucking idiot."*
+2. *"How did you choke that, clown?"*
+3. *"You had a Queen and stalemated, dumbass?"*
+4. *"Pathetic draw. You should be ashamed."*
+5. *"Snatched a draw from winning, moron."*
+6. *"Everyone's laughing at you, dipshit."*
+7. *"One job: mate the king. Failed, idiot."*
+8. *"Pure clown behavior. What a choke."*
+9. *"Draw by total incompetence, loser."*
+10. *"Tragic blunder. Learn how to mate."*
+11. *"You choked so hard it's hilarious."*
+12. *"Draw?! You should delete the game."*

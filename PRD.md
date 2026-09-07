@@ -6,7 +6,9 @@
 
 ## 1. Executive Summary & Vision
 
-**Smart Chess** is an interactive, real-time AI-assisted chess application designed to bridge the gap between playing chess and actively improving your game. Unlike traditional chess platforms that only analyze your game after it is finished, Smart Chess acts as a live **AI Mistake Coach**. It evaluates moves instantly using Stockfish 16, provides human-perspective feedback (e.g., *Book*, *Brilliant*, *Best*, *Excellent*, *Good*, *Inaccuracy*, *Mistake*, *Blunder*), highlights problematic moves in red, and offers an interactive pre-commit approval flow (*Play Anyway*, *Hint Box*, *Show Follow Up Moves*) so learners can analyze threats or retry moves before the bot responds. Additionally, the system continuously analyzes gameplay via Centipawn Loss to calculate the user's Tactical Performance Rating.
+**Smart Chess** is an interactive, real-time AI-assisted chess application designed to bridge the gap between playing chess and actively improving your game. Unlike traditional chess platforms that only analyze your game after it is finished, Smart Chess acts as a live **AI Mistake Coach**. It evaluates moves instantly using Stockfish 16, provides human-perspective feedback (e.g., *Book*, *Brilliant*, *Best*, *Excellent*, *Good*, *Inaccuracy*, *Mistake*, *Blunder*), highlights problematic moves in red, and offers an interactive pre-commit approval flow (*Play Anyway*, *Hint Box*, *Show Follow Up Moves*) so learners can analyze threats or retry moves before the bot responds.
+
+In addition to supportive instruction, Smart Chess features a savage **18+ Roast Mode** that trash-talks blunders in real time using short, uncensored, punchy voice commentary delivered via the Web Speech API and an intelligent non-repeating shuffle buffer. The system continuously analyzes gameplay via Centipawn Loss to calculate the user's Tactical Performance Rating.
 
 ---
 
@@ -22,6 +24,9 @@
 3. **Casual Players Seeking Learner Assistance**:
    - Players who prefer an option to toggle **Learner Mode** on or off depending on whether they want visual assist arrows and piece suggestions.
 
+4. **Competitive Players Seeking Unfiltered Fun (Roast Mode 18+)**:
+   - Adult players looking for a gritty, entertaining challenge where the AI roasts their mistakes and blunders without sugarcoating.
+
 ---
 
 ## 3. Core Features & Functional Requirements
@@ -31,7 +36,7 @@
 - **Visual Styling**: Built with modern dark aesthetic (`#4a4a4a` / `#8a8a8a` square pattern), crisp bold black SVG coordinate labels (`a-h`, `1-8`), and smooth 150ms piece movement animations.
 - **Dual Control Options**: Supports both **Drag-and-Drop** piece dragging and **Click-to-Move** (click source piece $\rightarrow$ green target dots $\rightarrow$ click destination).
 - **Side Selection**: Toggle between **⚪ White** and **⚫ Black** side; board flips automatically and Stockfish engine plays the opposing color.
-- **Clean Header Navigation Bar**: Top navigation bar displaying **You Vs Robot** mode label with an indented rating slider (**1320 - 3190 Rating Range**), **Side Selection**, **Restart Game**, **Learner Mode: ON/OFF**, **Coach Voice: ON/OFF**, and **Undo Move**.
+- **Clean Header Navigation Bar**: Top navigation bar displaying **You Vs Robot** mode label with an indented rating slider (**1320 - 3190 Rating Range**), **Side Selection**, **Restart Game**, **Learner Mode: ON/OFF**, **Coach Voice: ON/OFF**, **🔥 Roast Mode: ON/OFF**, and **Undo Move**.
 - **Rating-Based Robot Opponent (1320 - 3190 Rating)**: Configurable Stockfish robot opponent driven by a separate, dedicated engine instance (`opponent_engine`) using native `UCI_LimitStrength` and `UCI_Elo` bounds (1320 to 3190).
 - **Spoken Rating Announcement**: Web Speech API voice coach announces rating and tier (e.g., *"Rating 1500. Club Player mode."*) upon game creation.
 
@@ -47,14 +52,14 @@ Every move played by the user is evaluated against Stockfish thresholds and labe
 | Classification | Centipawn Loss Range / Criteria | UI Representation |
 | :--- | :--- | :--- |
 | **Book** | Known opening theory (Plies 1-3) | Neutral Badge |
-| **Brilliant** | Tactical sacrifice yielding high evaluation | Bright Cyan Badge |
+| **Brilliant** | Tactical sacrifice yielding decisive advantage | Bright Cyan Badge |
 | **Best** | Matches Stockfish's top move ($0$ CP loss) | Green Badge |
 | **Excellent** | $0 \le \text{CP Loss} \le 10$ | Green Badge |
-| **Good** | $11 \le \text{CP Loss} \le 25$ | Soft Green Badge |
-| **Inaccuracy** | $26 \le \text{CP Loss} \le 60$ | Yellow Badge + Orange/Red Destination Square |
-| **Mistake** | $61 \le \text{CP Loss} \le 150$ | Orange Badge + Red Destination Square |
-| **Blunder** | $> 150$ CP Loss | Red Badge + Red Destination Square |
-| **Worst Move** | Blunder resulting in heavy material/mate loss | Dark Red Badge + Red Destination Square |
+| **Good** | $\text{CP Loss} \le 40$ (Solid sound moves) | Soft Green Badge |
+| **Inaccuracy** | $41 \le \text{CP Loss} \le 90$ | Yellow Badge + Orange/Red Destination Square |
+| **Mistake** | $91 \le \text{CP Loss} \le 180$ | Orange Badge + Red Destination Square |
+| **Blunder** | $181 \le \text{CP Loss} \le 350$ | Red Badge + Red Destination Square |
+| **Worst Move** | $\text{CP Loss} > 350$ (Hanging Queen or walk into mate) | Dark Red Badge + Red Destination Square |
 
 ### 3.4 Coach Feedback & Red Square Highlight
 - **Coach Feedback Header**: Displays move classification immediately after a move attempt.
@@ -73,17 +78,19 @@ Every move played by the user is evaluated against Stockfish thresholds and labe
 ### 3.6 Formatted Move Log
 - **Human-Readable Moves**: Displays move history translated into verbose English with classification badges (e.g. `1. e4 Classic Opening | Pawn moves to e4`, `2. Nf3 Best Move 🌟 | Knight jumps to f3`).
 
-### 3.7 Learner Mode Toggle & Arrow Visibility Rules
+### 3.7 Learner Mode Toggle & Dynamic Safe Arrows (1–3 Possibilities)
 - **Learner Mode: ON**:
-  - Automatically displays green recommendation dots/arrows on piece selection.
-  - Automatically shows threat and alternative arrows when a Coach warning occurs.
+  - Automatically renders dynamic **1 to 3 green suggestion arrows** for safe moves when selecting a piece or evaluating positions.
+  - **Zero Contradictory Advice**: Stockfish evaluates top 5 lines and filters candidates with $\text{CP Loss} \le 40$. If a piece only has 1 safe movement, **1 arrow** is shown; if 2 or 3 solid possibilities exist, up to **3 arrows** are rendered. Inaccurate and blundered moves are strictly suppressed from suggestion arrows.
+  - During warning states, renders red opponent threat arrows alongside certified green safe alternative arrows, while suppressing any arrow to the player's attempted bad move.
 - **Learner Mode: OFF**:
-  - Suppresses all automatic arrows (piece selection and warning arrows are hidden).
+  - Suppresses all automatic recommendation arrows for standard competitive play.
   - **Arrows ONLY appear when the user explicitly clicks "Show Follow Up Moves"**.
 
-### 3.8 Audio & Voice Features
+### 3.8 Audio & Voice Features (Standard & Roast Commentary)
 - 🔊 **Classic Wooden Chess Sound Effects**: Powered by Web Audio API synthesizers (`playMoveSoundForUci()`) for piece placement and wooden captures.
 - 🎙️ **Synchronized Coach Voice Narration**: Uses Web Speech API Text-to-Speech (`speakMoveCategory()`). Spoken audio is 100% synchronized with the committed Move Log badge classification (e.g., *Good* badge plays *"Good move."*, *Best* badge plays *"Best move on the board."*).
+- 🔥 **18+ Savage Roast Mode Voice**: When enabled, the coach switches to aggressive, uncensored trash-talk commentary (`speakRoastMoveCategory()`), delivering short punchy lines (3-8 words) via Web Speech API with non-repeating shuffle buffers.
 
 ### 3.9 End-of-Game & Checkmate Announcements
 - **Checkmate Detection**: Automatically detects checkmate states and displays a clear winner announcement: `🏆 Checkmate! [White/Black] wins the game!`.
@@ -94,11 +101,13 @@ Every move played by the user is evaluated against Stockfish thresholds and labe
 - **Auto-Retry Connection**: Frontend attempts up to 3 automatic retries (2-second interval) on startup to connect to the backend.
 - **Interactive Connection Overlay**: If the backend is unreachable, a clean full-board overlay appears with a **🔄 Retry Connection** button instead of failing silently.
 
-### 3.11 User Authentication & Payments (3-Minute Free Trial)
-- **3-Minute Free Trial**: Unauthenticated or non-premium users are granted a 3-minute free gameplay trial. During this time, a persistent warning label is displayed (e.g., "You might end the game without login").
-- **Paywall & Restart**: Exactly after 3 minutes, the free trial expires. The game is interrupted and restarts, forcing the user to log in and pay to continue playing or start new full games.
-- **Google Authentication**: Users sign in via Supabase Auth (Google OAuth) to access their profile and payment status.
-- **Razorpay Premium Paywall**: To bypass the 3-minute limit, users must purchase premium status via Razorpay. Upon successful checkout, the database is updated.
+### 3.11 User Authentication, Age Gating & Payments
+- **3-Minute Free Trial**: Unauthenticated guest users are granted a 3-minute free gameplay trial with countdown warnings before board lock.
+- **Google & Email Authentication**: Users sign in or register via Supabase Auth (`AuthForm.tsx`).
+- **Clean 4-Digit Birth Year Collection**: Collects `birth_year` during signup and allows updates in `ProfileEditModal.tsx`. Provides age gate verification for 18+ Roast Mode without intrusive or deterrent UI labeling.
+- **Seamless Post-Signup Checkout**: Directly transitions new signups into the Razorpay payment modal (`PaymentOverlay.tsx`), eliminating redundant friction and bypass buttons.
+- **Automated Webhook Fulfillment**: The backend features `POST /api/payment/webhook` with HMAC SHA-256 signature verification (`x-razorpay-signature`) to activate `is_premium = True` in Supabase asynchronously, even if users close their browser window.
+- **Developer Bypass**: Developer/admin accounts (`janhavikolekar280@gmail.com`) are granted instant unrestricted premium access.
 
 ### 3.12 Enhanced Player Profile & Analytics System
 - **Player Profile Modal (`ProfileDropdown.tsx`)**:
@@ -113,6 +122,7 @@ Every move played by the user is evaluated against Stockfish thresholds and labe
 
 - **Profile Editing & Vector Avatars (`ProfileEditModal.tsx` & `avatarUtils.tsx`)**:
   - **Display Name Editor**: Allows updating player in-game handle with length validation.
+  - **Birth Year Editor**: Standard 4-digit input field for birth year.
   - **Photo Upload**: Supports uploading custom photos from device gallery, auto-compressed client-side to base64 JPEG under 256px.
   - **12 Pure Vector SVG Chess Piece Avatars**: Complete set of 12 crisp vector piece icons (`wP`, `bP`, `wN`, `bN`, `wB`, `bB`, `wR`, `bR`, `wQ`, `bQ`, `wK`, `bK`), eliminating canvas/emoji rendering glitches on Windows and high-DPI displays.
   - **Multi-Tier Persistence (`useSession.ts`)**: Saves profile data simultaneously to Supabase Auth user metadata (`supabase.auth.updateUser`), `public.profiles` table upsert, and synchronous `localStorage` caching (`smartchess_profile_<userId>`), guaranteeing zero profile resets on browser refresh.
@@ -135,6 +145,22 @@ Every move played by the user is evaluated against Stockfish thresholds and labe
 - **Analytics Engine**: The backend continuously analyzes player moves, comparing accuracy and centipawn loss against Stockfish best moves.
 - **Predicted ELO**: Based on performance history, the system calculates and displays a dynamic "Predicted Player Rating" that updates as games are completed.
 
+### 3.15 Roast Mode (18+) Feature Specification
+- **Activation & Aesthetics**: Toggled via the top navigation bar with a dedicated crimson red theme and animated fire badge (`border-red-600 bg-red-950/40 text-red-400`).
+- **Age Gate Validation**: Checks the player's `birth_year`. Players must be 18 or older to enable Roast Mode; underage players receive an advisory gate modal.
+- **Voice Delivery & Tone**: Employs Web Speech API TTS with short, punchy, unfiltered dialogues (3 to 8 words), zero playful emojis, and aggressive comedic delivery.
+- **Shuffle Engine**: Implements a non-repeating shuffle buffer across 10 distinct game state categories:
+  1. `MAJOR_BLUNDERS` ($\text{CP Loss} > 350$, hung queen)
+  2. `MISTAKES` ($91 \le \text{CP Loss} \le 180$)
+  3. `INACCURACIES` ($41 \le \text{CP Loss} \le 90$)
+  4. `GOOD_MOVES` ($\text{CP Loss} \le 40$)
+  5. `PRE_MOVE_WARNINGS` (Blunder precheck warning)
+  6. `UNDO_MOVE` (Player clicks undo)
+  7. `CHECKMATE_ROBOT_WINS`
+  8. `CHECKMATE_PLAYER_WINS`
+  9. `STALEMATE`
+  10. `SLOW_PLAY` (Turn idling > 45s)
+
 ---
 
 ## 4. Technical Stack & System Architecture
@@ -143,7 +169,7 @@ Every move played by the user is evaluated against Stockfish thresholds and labe
 
 - **Frontend**:
   - Framework: **Next.js 15 (App Router)** + **React 19** + **TypeScript**
-  - Styling: **Tailwind CSS** (Dark Theme) + Vanilla CSS
+  - Styling: **Tailwind CSS** (Dark Theme & Crimson Roast Theme) + Vanilla CSS
   - Charting Engine: **Recharts (^3.10.1)** (Vector SVG)
   - Chess Board Render: **`react-chessboard`**
   - Game Logic Utilities: **`chess.js`**
@@ -157,7 +183,7 @@ Every move played by the user is evaluated against Stockfish thresholds and labe
   - Engine Wrapper: **`python-chess`**
   - Chess Engine: **Stockfish 16.1** (Windows `.exe` / Linux x86_64 binary)
   - Database: **Supabase PostgreSQL** (`supabase-py` client) + **SQLite** (`puzzles2.db`)
-  - Payments: **Razorpay Python SDK**
+  - Payments: **Razorpay Python SDK** with Webhook HMAC verification
 
 ### 4.2 Folder Structure
 
@@ -169,9 +195,9 @@ Smart_Chess/
 ├── performance.txt
 ├── Backend/
 │   ├── app/
-│   │   ├── main.py            # FastAPI endpoints (/api/game, /api/user, /api/puzzles)
+│   │   ├── main.py            # FastAPI endpoints (/api/game, /api/user, /api/puzzles, /api/payment/webhook)
 │   │   ├── engine.py          # Stockfish UCI wrapper with 30s timeout & automatic retry
-│   │   ├── classifier.py      # Centipawn loss classification & opening book
+│   │   ├── classifier.py      # Centipawn loss classification & opening book (40/90/180/350 thresholds)
 │   │   ├── game_manager.py    # Game session state, move commit, undo & 0-move cleanup
 │   │   ├── analytics.py       # ACPL-based tactical rating adjustment algorithms
 │   │   ├── puzzle_manager.py  # SQLite puzzle loader and evaluation manager
@@ -187,23 +213,26 @@ Smart_Chess/
 │   │   │   ├── page.tsx       # Root page mounting ChessApp
 │   │   │   └── globals.css    # Dark mode & custom scrollbar styling
 │   │   ├── components/
-│   │   │   ├── ChessApp.tsx            # Master application state & top navigation
+│   │   │   ├── ChessApp.tsx            # Master application state, top navigation & safe arrows
 │   │   │   ├── ChessBoardArea.tsx      # Max-sized responsive board & arrow overlays
 │   │   │   ├── BoardThemeSelector.tsx  # Board theme palette selector
 │   │   │   ├── CoachOverlay.tsx        # Pre-commit warning card & action buttons
 │   │   │   ├── ProfileDropdown.tsx     # 3-metric profile modal & recent games list
-│   │   │   ├── ProfileEditModal.tsx    # Player name editor & avatar selector
+│   │   │   ├── ProfileEditModal.tsx    # Player name & birth year editor, avatar selector
 │   │   │   ├── StatisticsModal.tsx     # Recharts SVG rating trajectory modal
+│   │   │   ├── PaymentOverlay.tsx      # Seamless Razorpay checkout modal
 │   │   │   ├── MoveLog.tsx             # Verbose move history & badges
 │   │   │   └── TrialTimer.tsx          # 3-minute guest trial countdown
+│   │   ├── data/
+│   │   │   └── roastDialogues.ts       # 18+ uncensored roast matrix & non-repeating shuffle buffer
 │   │   ├── services/
 │   │   │   └── api.ts                  # REST API client with auto-retry
 │   │   └── utils/
 │   │       ├── avatarUtils.tsx         # 12 pure vector SVG chess pieces
-│   │       ├── useSession.ts           # Multi-tier profile persistence hook
+│   │       ├── useSession.ts           # Multi-tier profile persistence hook & admin exemptions
 │   │       ├── chessTranslator.ts      # SAN to verbose English translator
 │   │       ├── soundEffects.ts         # Web Audio API sound synthesizer
-│   │       └── coachVoice.ts           # Web Speech API TTS voice narration
+│   │       └── coachVoice.ts           # Standard & Roast Web Speech API TTS narration
 │   ├── package.json
 │   └── next.config.ts
 ```
@@ -216,3 +245,4 @@ The application is designed for independent, decoupled deployment:
 - **Frontend**: Hosted on **Vercel** or any Next.js edge platform for global low-latency CDN delivery.
 - **Backend**: Hosted on a dedicated Linux VPS or container platform (**Render**, **Railway**, **AWS**, or **DigitalOcean**) with full CPU core access for Stockfish UCI processing.
 - **Database**: Cloud-hosted **Supabase PostgreSQL** with automated JWT-based Row Level Security.
+- **Webhooks**: Direct server-to-server HTTPS webhook communication from Razorpay to Backend for high-resilience payment processing.

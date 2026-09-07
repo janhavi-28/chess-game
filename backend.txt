@@ -1,0 +1,306 @@
+================================================================================
+                    SMART CHESS - BACKEND ARCHITECTURE & FILE GUIDE
+================================================================================
+
+Project: Smart Chess - AI Mistake Coach
+Technology Stack: Python 3.12, FastAPI (Uvicorn ASGI), python-chess, Stockfish 16.1,
+                  Supabase PostgreSQL, SQLite, Razorpay Python SDK.
+
+--------------------------------------------------------------------------------
+1. BACKEND DIRECTORY & FILE STRUCTURE
+--------------------------------------------------------------------------------
+
+Backend/
+├── app/
+│   ├── __init__.py              # Package initialization
+│   ├── main.py                  # FastAPI server, REST routes, webhooks & payments
+│   ├── engine.py                # Stockfish 16 UCI subprocess controller & evaluation
+│   ├── classifier.py            # Centipawn loss math, move classification & opening book
+│   ├── game_manager.py          # Game sessions, database syncing & 0-move game cleanup
+│   ├── analytics.py             # ACPL calculation & tactical rating prediction
+│   ├── puzzle_manager.py        # SQLite tactical puzzles interface & attempt checker
+│   ├── schemas.py               # Pydantic request & response models
+│   └── rules.txt                # Centipawn loss threshold quick reference
+├── data/
+│   └── puzzles2.db              # SQLite database containing tactical puzzles (600-2600 ELO)
+├── stockfish.exe                # Stockfish 16.1 AVX2 64-bit native engine binary
+├── download_stockfish.py        # Automated helper script to fetch Stockfish binaries
+├── requirements.txt             # Python runtime dependencies
+├── .env                         # Environment variables (API keys & credentials)
+├── .env.example                 # Template for environment configuration
+└── README.md                    # Backend-specific documentation
+
+
+--------------------------------------------------------------------------------
+2. DETAILED FILE-BY-FILE FUNCTIONALITY
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+FILE: Backend/app/main.py
+--------------------------------------------------------------------------------
+PURPOSE:
+The primary application entry point, ASGI server configuration, and REST API controller.
+
+CORE FUNCTIONS & ENDPOINTS:
+- Lifespan Management:
+  * Initializes the Stockfish analysis engine on server startup.
+  * Initializes a separate opponent robot engine with configurable ELO rating (1320-3190).
+  * Gracefully terminates engine subprocesses on server shutdown.
+- Game Lifecycle Endpoints:
+  * POST /api/game/new:
+    Creates a new game session. Supports custom starting FENs and dynamically sets the
+    opponent robot engine ELO (1320 to 3190) based on player configuration.
+  * GET /api/game/{game_id}/state:
+    Retrieves the current board FEN, turn, move history, and game over status.
+  * POST /api/game/{game_id}/undo:
+    Pops the last move pair (player move + bot reply) from the board stack, returning
+    the previous turn position for full-stack rollback.
+  * GET /api/game/resume:
+    Retrieves the latest active match for an authenticated user from Supabase.
+- Move Evaluation & Commit:
+  * POST /api/move/precheck:
+    Evaluates a proposed move before it is committed. Runs Stockfish multi-pv analysis,
+    calculates centipawn loss, checks for blunders/mistakes, and returns refutation lines
+    and threat warnings.
+  * POST /api/move/commit:
+    Finalizes the move onto the board, appends it to game history, saves the state to
+    Supabase, and checks for checkmate or draw conditions.
+  * GET /api/engine/best-moves/{game_id}:
+    Evaluates top 5 engine lines and filters out moves with centipawn loss > 40.
+    Returns up to 3 certified "Safe Moves" to render as green hint arrows on the frontend.
+- Payment & Webhook Endpoints:
+  * POST /api/payment/create-order:
+    Uses Razorpay SDK to create an order of INR 1.00 (100 paise). Encodes user_id in
+    receipt and order notes for downstream attribution.
+  * POST /api/payment/verify:
+    Synchronously verifies client payment signatures via razorpay.utility.verify_payment_signature
+    and updates user's is_premium = True in Supabase profiles table.
+  * POST /api/payment/webhook:
+    Listens for Razorpay webhook events (payment.captured, order.paid).
+    Validates HMAC SHA-256 signature using RAZORPAY_WEBHOOK_SECRET and x-razorpay-signature header.
+    Extracts user_id from notes/receipt and asynchronously updates user to is_premium = True.
+- User Profile & Match History:
+  * GET /api/user/profile:
+    Returns user tactical rating, win-rate, total games, and profile details.
+  * GET /api/user/games:
+    Returns up to 50 match records for a user. Filters out 0-move unplayed sessions.
+- Tactical Puzzles:
+  * POST /api/puzzles/start:
+    Fetches a puzzle matching the requested difficulty tier (1 to 5).
+  * POST /api/puzzles/attempt:
+    Validates the player's move attempt against the puzzle solution.
+
+
+--------------------------------------------------------------------------------
+FILE: Backend/app/engine.py
+--------------------------------------------------------------------------------
+PURPOSE:
+Subprocess wrapper and interface for the Stockfish 16.1 UCI engine using python-chess.
+
+CORE FUNCTIONS & LOGIC:
+- StockfishEngine Class:
+  * Spawns stockfish.exe as an asynchronous UCI subprocess.
+  * Configures UCI options: Threads=2, Hash=128MB.
+  * Multi-PV Analysis: Runs engine analysis at depth 14 with a strict 1.5-second time cap
+    (Limit(depth=14, time=1.5)) to ensure sub-second response times without UI freezing.
+  * Score Evaluation: Normalizes centipawn evaluations from the user's perspective.
+    Handles forced mate scores (+CP_MATE / -CP_MATE).
+  * Safe Analysis Guard (_safe_analyse): Pre-checks board validity (board.status() == STATUS_VALID)
+    before sending FEN strings to Stockfish, preventing engine subprocess crashes.
+- Opponent Engine Class:
+  * Dedicated second Stockfish instance.
+  * Uses native UCI_LimitStrength and UCI_Elo parameters to throttle bot play accurately
+    between 1320 and 3190 ELO.
+
+
+--------------------------------------------------------------------------------
+FILE: Backend/app/classifier.py
+--------------------------------------------------------------------------------
+PURPOSE:
+Move evaluation math, centipawn loss calculation, and quality classification.
+
+CENTIPAWN LOSS FORMULA:
+  Centipawn Loss = Best Engine Move Evaluation - Played Move Evaluation
+
+MOVE CLASSIFICATION THRESHOLDS:
+  1. Brilliant (!!): 0 CP loss, must be top engine move and involve a piece sacrifice.
+  2. Best Move: 0 CP loss, absolute top engine line without a sacrifice.
+  3. Excellent: 0 to 10 CP loss.
+  4. Good: Loss is under 40 points (CP loss <= 40).
+  5. Inaccuracy: Loss is under 90 points (41 <= CP loss <= 90).
+  6. Mistake: Loss is under 180 points (91 <= CP loss <= 180).
+  7. Blunder: Loss is under 350 points (181 <= CP loss <= 350).
+  8. Worst Move: Loss > 350 points, or walking into a forced checkmate.
+
+DYNAMIC SAFE ALTERNATIVES FILTERING:
+- Evaluates engine candidate lines.
+- Compares each candidate's evaluation against the #1 top move.
+- Flags is_safe = True only if candidate CP loss <= 40.
+- Guarantees the frontend receives up to 3 non-blunder moves for green hint arrows.
+
+OPENING BOOK INTEGRATION:
+- Recognizes standard opening theory moves during plies 1 to 3.
+- Warns against premature flank pawn moves (a, b, g, h pawns) during early development.
+
+
+--------------------------------------------------------------------------------
+FILE: Backend/app/game_manager.py
+--------------------------------------------------------------------------------
+PURPOSE:
+In-memory session state management, database synchronization, and clean game tracking.
+
+KEY RESPONSIBILITIES:
+- Game Session Container:
+  * Tracks game_id, chess.Board instance, move history, turn number, and player color.
+- Database Synchronization:
+  * Upserts game records to Supabase games table on every committed move.
+- 0-Move Clean-Up Policy:
+  * Games where 0 moves were played (board left in starting position) are automatically
+    pruned upon new game creation and excluded from API match history.
+- Full-Stack Rollback:
+  * Handles undo operations by popping both the player's move and the opponent's reply
+    from board.move_stack, returning the clean prior board state.
+
+
+--------------------------------------------------------------------------------
+FILE: Backend/app/analytics.py
+--------------------------------------------------------------------------------
+PURPOSE:
+Centipawn loss performance analysis and tactical rating prediction.
+
+KEY RESPONSIBILITIES:
+- Calculates Average Centipawn Loss (ACPL) across user games.
+- Predicts dynamic player ELO tier:
+  * ACPL < 25: Master / Expert level (+5 rating adjustment)
+  * ACPL 25 - 50: Club Player level
+  * ACPL 50 - 100: Intermediate level
+  * ACPL > 100: Novice / Beginner level
+
+
+--------------------------------------------------------------------------------
+FILE: Backend/app/puzzle_manager.py
+--------------------------------------------------------------------------------
+PURPOSE:
+Decoupled tactical puzzle loader and evaluator.
+
+KEY RESPONSIBILITIES:
+- Connects to local SQLite database (Backend/data/puzzles2.db).
+- Queries puzzles by rating range:
+  * Tier 1: 600 - 1000 ELO (Beginner)
+  * Tier 2: 1000 - 1400 ELO (Novice)
+  * Tier 3: 1400 - 1800 ELO (Intermediate)
+  * Tier 4: 1800 - 2200 ELO (Advanced)
+  * Tier 5: 2200 - 2600 ELO (Master)
+- Evaluates user move attempts against standard UCI solution sequences.
+- Completely isolated from match win rates and Supabase tables.
+
+
+--------------------------------------------------------------------------------
+FILE: Backend/app/schemas.py
+--------------------------------------------------------------------------------
+PURPOSE:
+Pydantic data models for typed request and response schemas.
+
+KEY MODELS:
+- NewGameRequest: starting_fen (optional), bot_elo (optional, default 1500).
+- PreMoveCheckRequest: game_id, move_uci.
+- PreMoveCheckResponse: label, cp_loss, top_alternatives, refutation_sequence, threat_preview.
+- CommitMoveRequest: game_id, move_uci.
+- CommitMoveResponse: fen, san, classification, is_game_over, result.
+- CreateOrderRequest: user_id.
+- VerifyPaymentRequest: razorpay_order_id, razorpay_payment_id, razorpay_signature, user_id.
+
+
+--------------------------------------------------------------------------------
+FILE: Backend/app/rules.txt
+--------------------------------------------------------------------------------
+PURPOSE:
+Direct reference defining the active centipawn loss boundaries:
+- Good: loss is under 40
+- Inaccuracy: loss is under 90
+- Mistake: loss is under 180
+- Blunder: loss is under 350
+
+
+--------------------------------------------------------------------------------
+FILE: Backend/data/puzzles2.db
+--------------------------------------------------------------------------------
+PURPOSE:
+SQLite database storing curated tactical puzzles with FEN positions, solution moves,
+themes, and ratings.
+
+
+--------------------------------------------------------------------------------
+FILE: Backend/stockfish.exe
+--------------------------------------------------------------------------------
+PURPOSE:
+The compiled Stockfish 16.1 64-bit AVX2 engine executable used for all chess evaluations.
+
+
+--------------------------------------------------------------------------------
+3. MOVE CLASSIFICATION & EVALUATION PIPELINE (HOW BLUNDERS ARE CALCULATED)
+--------------------------------------------------------------------------------
+
+The move classification engine operates as follows:
+
+Step 1: Player Drops Piece
+- Frontend captures user input and issues POST /api/move/precheck with { game_id, move_uci }.
+
+Step 2: Dual Stockfish Analysis in engine.py & classifier.py
+- Best Engine Move (Depth 14, 1.5s cap):
+  Stockfish evaluates the position before the move and extracts the #1 best move and its
+  centipawn score (best_cp) and mate status (best_is_mate).
+- Played Move Evaluation:
+  Stockfish evaluates the resulting position after the player's move is applied (played_cp).
+
+Step 3: Centipawn Loss Math
+  cp_loss = max(0, best_cp - played_cp)
+  Special cases:
+  - If best move had a forced mate and played move threw it away -> cp_loss = 1000.
+  - If played move walks into a forced checkmate -> cp_loss = 2000.
+
+Step 4: Classification Label Assignment
+  - Top engine choice or cp_loss <= 40 -> "Good"
+  - 41 <= cp_loss <= 90                -> "Inaccuracy"
+  - 91 <= cp_loss <= 180               -> "Mistake"
+  - 181 <= cp_loss <= 350              -> "Blunder"
+  - cp_loss > 350                      -> "Worst Move"
+
+Step 5: Safe Alternative Extraction (Dynamic 1–3 Hints)
+  - Evaluates top 5 engine lines.
+  - Computes candidate loss against best_cp.
+  - Keeps only candidates where candidate_cp_loss <= 40 (certified safe moves).
+  - Returns up to 3 safe alternatives for frontend hint arrows.
+
+Step 6: Refutation Line Generation
+  - Stockfish generates the principal variation (punishment moves) showing how the
+    opponent can capitalize on the mistake, which the frontend animates on request.
+
+
+--------------------------------------------------------------------------------
+4. PUZZLES ARCHITECTURE (CLIENT-SERVER INTEGRATION)
+--------------------------------------------------------------------------------
+
+Are puzzles in the Backend or Frontend?
+ANSWER: BOTH - split cleanly into a Backend storage/solver engine and Frontend interactive UI.
+
+BACKEND ROLE:
+- Database: Backend/data/puzzles2.db (SQLite database containing thousands of tactical puzzles).
+- Manager: Backend/app/puzzle_manager.py:
+  * Queries puzzles by difficulty tier:
+    Tier 1 (600-1000 ELO), Tier 2 (1000-1400 ELO), Tier 3 (1400-1800 ELO),
+    Tier 4 (1800-2200 ELO), Tier 5 (2200-2600 ELO).
+  * Validates user move attempts against benchmark UCI solution sequences.
+- API Routes (Backend/app/main.py):
+  * POST /api/puzzles/start: Returns puzzle_id, FEN, player_color, and rating.
+  * POST /api/puzzles/attempt: Evaluates player move UCI against solution.
+- Decoupling: Puzzles are completely decoupled from regular match win rates and Supabase tables.
+
+FRONTEND ROLE:
+- UI & Game State: Frontend/src/components/ChessApp.tsx:
+  * Manages isPuzzleMode, puzzleData, and puzzleMoveIndex state.
+  * Calls api.startPuzzle() and api.attemptPuzzleMove().
+  * Renders the puzzle board, guides player turns, and plays audio feedback
+    (speakPuzzleStartAnnouncement).
+
+================================================================================

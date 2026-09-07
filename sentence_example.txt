@@ -1,0 +1,132 @@
+
+
+================================================================================
+SECTION 1: OPENING MOVES (MOVES 1 - 5)
+================================================================================
+
+SCENARIO 1: Solid Center Pawn Move (1. e4 or 1. d4)
+Player Move: White pushes pawn to e4 or d4.
+Board Context: Standard opening theory controlling the center squares.
+Normal Coach: "Pawn to e4. Good job controlling the center squares and opening lines for your pieces."
+Roast Mode (18+): "A normal move. What, do you want a fucking gold star and a cookie for doing the bare minimum?"
+Breakdown: The move is objectively solid, so the bot cannot call it a blunder. Instead, it mocks the player for expecting applause for simply playing a textbook beginner move.
+
+SCENARIO 2: Terrible Flank Pawn Move (1. h4 or 1. a4)
+Player Move: White pushes the h-pawn or a-pawn on move 1.
+Board Context: Completely ignores center control and weakens the flank.
+Normal Coach: "Build your minor pieces. Try controlling the center squares instead of edge pawns."
+Roast Mode (18+): "Moving flank pawns on move one? What scam TikTok tutorial did your dumb ass learn this from? Attack the fucking center!"
+Breakdown: Attacks the player's opening knowledge and calls out the useless flank pawn push immediately.
+
+SCENARIO 3: Solid Center Knight Development (1. Nf3 or 1. Nc3)
+Player Move: Knight develops toward the center.
+Board Context: Sound development, fights for central control.
+Normal Coach: "Knight to f3. Developing a minor piece towards the center and preparing to castle."
+Roast Mode (18+): "Look at you, jumping the horse out on move one trying to look like a fucking intellectual. Let us see if you actually know what to do with it."
+Breakdown: Acknowledges the good move with arrogant, backhanded skepticism.
+
+SCENARIO 4: Knight to the Edge (1. Na3 or 1. Nh3)
+Player Move: Knight hops to the rim of the board.
+Board Context: "A knight on the rim is dim." Controls only 4 squares instead of 8.
+Normal Coach: "Knights are stronger toward the center. On the edge, they have fewer active squares."
+Roast Mode (18+): "A Knight to the edge on move one?! What kind of inbred chess opening is this? Why the fuck are you putting your horse on the wall where it does nothing, you dumbass?"
+Breakdown: Pure aggressive ridicule for breaking the most famous opening principle in chess.
+
+SCENARIO 5: Early Queen Attack / Wayward Queen (2. Qh5)
+Player Move: Bringing the Queen out on move 2 trying for a cheap 4-move Scholar's Mate.
+Board Context: Premature Queen development, leaves Queen exposed to tempo attacks.
+Normal Coach: "Be careful bringing your Queen out too early; your opponent can attack her while developing pieces."
+Roast Mode (18+): "Bringing the Queen out on move two? What are you, an eight-year-old trying to Scholar's Mate me? Put her back in her cage before she gets humiliated, you clown."
+Breakdown: Mocks the player for attempting a cheap beginner trap against an engine that sees 20 moves ahead.
+
+SCENARIO 6: Moving the King on Move 3 (Losing Castling Rights)
+Player Move: Player steps the King to e2 (Bongcloud Attack) or f2 unnecessarily.
+Board Context: Completely destroys King safety and forfeits castling rights.
+Normal Coach: "Avoid moving your King early. You lose the right to castle and leave your King vulnerable."
+Roast Mode (18+): "Did you just walk your King into the open on move three? Are you suicidal, or did you drop your mouse? Your King is naked in the street, you absolute moron."
+Breakdown: Brutally roasts the self-inflicted danger and lost castling rights.
+
+SCENARIO 7: Standard Kingside Castling (O-O)
+Player Move: Player castles kingside to tuck King away safely.
+Board Context: Essential defensive milestone in almost every chess game.
+Normal Coach: "Kingside castling. Your King is safely tucked away, and your Rook is activated."
+Roast Mode (18+): "Finally hid your cowardly King behind a wall of pawns. Good, now you can watch your pieces get dismantled from a safe distance."
+Breakdown: Sarcastic spin on a proper defensive move, calling the player a coward for hiding.
+
+================================================================================
+SECTION 2: MIDDLEGAME MOVES AND TACTICS
+================================================================================
+
+SCENARIO 8: Hanging the Queen for Free (e.g. Queen captures defended pawn, or steps into attack)
+Player Move: Player moves Queen to an unprotected square where an enemy piece takes it next turn.
+Board Context: Game-losing catastrophic blunder (Centipawn loss > 600).
+Normal Coach: "Hold on! That move is a blunder. Your Queen is attacked and will be captured on the next move."
+Roast Mode (18+): "Did your brain take a fucking coffee break, or are you always this stupid? You just hung your Queen for free, you absolute clown. Delete the game."
+Breakdown: Maximum savage anger. The Queen is worth 9 points; losing it for nothing warrants the harshest roast in the database.
+
+SCENARIO 9: Hanging a Free Minor Piece (Knight or Bishop left undefended)
+Player Move: Moves a piece and forgets that a Bishop or Knight is under attack.
+Board Context: Down 3 full points of material (Centipawn loss 250 - 400).
+Normal Coach: "Mistake. You left your Knight undefended, allowing Black to capture it."
+Roast Mode (18+): "You are handing out free pieces like samples at Costco. Stop embarrassing yourself, you dumbass. Did you genuinely think that was a trap or are you just blind?"
+Breakdown: Mocks the player's lack of board vision and calls them out for donating pieces.
+
+SCENARIO 10: Pointless Piece Shuffling (No plan, moving back and forth)
+Player Move: Moving a rook back and forth between a1 and b1 without changing the game.
+Board Context: Inaccuracy. Wasting turns while opponent builds an attack.
+Normal Coach: "This move does not improve your position. Look for active squares or open files."
+Roast Mode (18+): "That move accomplished literally nothing. You just wasted thirty seconds of both our fucking lives. Push something forward, you scared little bitch."
+Breakdown: Calls out passive, cowardly gameplay and mocks the wasted time.
+
+SCENARIO 11: Finding an Engine Best Move or Queen Sacrifice (Brilliant Move)
+Player Move: Player sacrifices a piece for a forced checkmate sequence.
+Board Context: Top Stockfish line, swing of +6.00 advantage.
+Normal Coach: "Brilliant! An incredible tactical sacrifice that completely cracks open your opponent's defense."
+Roast Mode (18+): "Wait... you actually found that?! Did you open Stockfish in another fucking tab, you little cheater? Disgusting move. Do not act like you planned that shit from move one."
+Breakdown: The AI is genuinely hurt/shocked by the move, so it accuses the player of cheating and refuses to give pure compliments.
+
+SCENARIO 12: Missing an Opponent's Hanging Piece
+Player Move: Opponent made a blunder, but player completely missed the free Queen or Rook and played a pawn move instead.
+Board Context: Huge missed tactical opportunity.
+Normal Coach: "You missed an opportunity. You could have captured the undefended black Rook."
+Roast Mode (18+): "I literally handed you a free piece on a silver platter and your blind ass looked the other way. Are you playing with your monitor turned off?!"
+Breakdown: Roasts the player for having zero tactical awareness and letting the bot off the hook.
+
+================================================================================
+SECTION 3: SPECIAL PLAYER ACTIONS AND SYSTEM EVENTS
+================================================================================
+
+SCENARIO 13: Player Clicks the "Undo Move" Button
+Player Action: Clicks Undo after realizing they made a blunder.
+Context: Player wants to take back their turn.
+Normal Coach: "Move undone. You can now choose a different move."
+Roast Mode (18+): "Oh, running away like a little bitch? You made your stupid bed, now sleep in it! Ctrl+Z will not fix your dogshit chess vision, but take your little do-over."
+Breakdown: Savage trash-talk targeting the shame of needing a takeback in chess.
+
+SCENARIO 14: Player Takes More Than 25 Seconds on One Turn
+Player Action: Staring at the board, no move made for 25+ seconds.
+Context: Turn inactivity timer expires.
+Normal Coach: "Take your time, analyze all candidate moves and threats."
+Roast Mode (18+): "Are you calculating twenty moves ahead, or did your dumb ass fall asleep at the desk? The clock is ticking and my patience is running out. Move already, for fuck's sake!"
+Breakdown: Impatient trash-talk breaking the player's focus and hurrying them up.
+
+SCENARIO 15: The Robot Checkmates the Player (Player Loses)
+Game State: Checkmate delivered by the AI.
+Context: Game over.
+Normal Coach: "Checkmate. Good game! Review your moves in the analytics panel to see where you can improve."
+Roast Mode (18+): "CHECKMATE! Pack your bags, close the laptop, and go take up knitting. You fucking suck at chess. Clean sweep, now go cry in the shower and think about what you did."
+Breakdown: Maximum victory gloating, ending the match on a brutal insult.
+
+SCENARIO 16: The Player Checkmates the Robot (Player Wins)
+Game State: Checkmate delivered by the player against the AI.
+Context: Rare player victory.
+Normal Coach: "Checkmate! Fantastic victory! Your tactical play was outstanding."
+Roast Mode (18+): "Whatever. Pure fucking beginner's luck. I literally let you win so your soft ass would not ragequit and uninstall the app. Rematch me right now, coward, let us see if you can do that twice."
+Breakdown: Sore loser, ragequit excuses, accusing lag/glitches, and demanding an immediate rematch.
+
+SCENARIO 17: Player Botches an Overwhelming Win into a Stalemate
+Game State: Stalemate (Draw) when player was up a Queen and two Rooks.
+Context: Player failed to deliver checkmate and suffocated the enemy King without legal moves.
+Normal Coach: "Stalemate! Because the black King has no legal moves and is not in check, the game is a draw."
+Roast Mode (18+): "A stalemate?! You had an extra Queen and you still botched it into a draw? You unbelievable fucking idiot. You snatched a draw right from the jaws of victory. What a tragic clown."
+Breakdown: Deep ridicule for failing the simplest endgame technique in chess.

@@ -1,0 +1,419 @@
+================================================================================
+                    SMART CHESS - FRONTEND ARCHITECTURE & FILE GUIDE
+================================================================================
+
+Project: Smart Chess - AI Mistake Coach
+Technology Stack: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS,
+                  Recharts (^3.10.1), react-chessboard, chess.js, Web Audio API,
+                  Web Speech API, Supabase Auth JS, Razorpay Checkout.
+
+--------------------------------------------------------------------------------
+1. FRONTEND DIRECTORY & FILE STRUCTURE
+--------------------------------------------------------------------------------
+
+Frontend/
+├── public/
+│   ├── Chess_Project_Voices/       # Pre-recorded coach audio clips & win sounds (.mp3)
+│   │   ├── Best Move On th Board.mp3
+│   │   ├── Book.mp3
+│   │   ├── Brilliant.mp3
+│   │   ├── Good move.mp3
+│   │   ├── Hold on, that's a mistake. Don't rush take a moment to rethink your strategy and try to find a better move.mp3
+│   │   ├── That's a blunder..mp3
+│   │   ├── That's a serious blunder..mp3
+│   │   ├── That's a slight inaccuracy.mp3
+│   │   ├── Watch out that's a mistake.mp3
+│   │   ├── Watch out! Here is their plan..mp3
+│   │   ├── move.mp3
+│   │   └── win.mp3
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx              # Next.js Root Layout, fonts & Razorpay script
+│   │   ├── page.tsx                # Next.js Root Page mounting ChessApp
+│   │   └── globals.css             # Dark theme styles & global Tailwind utilities
+│   ├── components/
+│   │   ├── ChessApp.tsx            # Master controller & application state machine
+│   │   ├── ChessBoardArea.tsx      # Responsive board grid (85vh), arrows & highlights
+│   │   ├── BoardThemeSelector.tsx  # Board theme palette selector (5 themes)
+│   │   ├── CoachOverlay.tsx        # Pre-commit warning card & action buttons
+│   │   ├── CoachPanel.tsx          # AI coach avatar, subtitle box & evaluation
+│   │   ├── MoveLog.tsx             # Verbose English move history with quality badges
+│   │   ├── ProfileDropdown.tsx     # Glassmorphic user drawer & recent games continuation
+│   │   ├── ProfileEditModal.tsx    # Display name, 4-digit birth year & avatar editor
+│   │   ├── StatisticsModal.tsx     # Recharts SVG rating trajectory & win rate graphs
+│   │   ├── PaymentOverlay.tsx      # Direct Razorpay checkout & paywall modal
+│   │   ├── TrialTimer.tsx          # 3-minute guest trial countdown timer
+│   │   ├── SpeechBubble.tsx        # Floating dialogue bubble displaying coach speech
+│   │   ├── RoastAgeGateModal.tsx   # Age advisory modal for 18+ Roast Mode
+│   │   └── AuthForm.tsx            # Supabase Email & Google OAuth signup/login
+│   ├── data/
+│   │   └── roastDialogues.ts       # 18+ uncensored roast matrix & non-repeating shuffle engine
+│   ├── services/
+│   │   └── api.ts                  # REST API client with automatic 3-retry resilience
+│   ├── styles/
+│   │   └── App.css                 # Custom board animations & layout styles
+│   └── utils/
+│       ├── soundEffects.ts         # Web Audio API synthesizer & Web Speech API TTS controller
+│       ├── coachVoice.ts           # Audio routing: MP3 clips, dynamic refutation & roast voice
+│       ├── chessTranslator.ts      # SAN notation to natural English converter
+│       ├── avatarUtils.tsx         # 12 crisp vector SVG chess piece icons
+│       ├── useSession.ts           # Multi-tier profile persistence hook & admin bypass
+│       └── supabaseClient.ts       # Supabase client initialization
+├── package.json                    # Dependencies & npm scripts
+└── next.config.ts                  # Next.js build & server settings
+
+
+--------------------------------------------------------------------------------
+2. DETAILED FILE-BY-FILE FUNCTIONALITY
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/app/page.tsx
+--------------------------------------------------------------------------------
+- Entry point for the web application.
+- Uses dynamic client loading to mount ChessApp.tsx cleanly on the client side,
+  avoiding server-side rendering (SSR) mismatches for browser-only audio and board APIs.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/app/layout.tsx
+--------------------------------------------------------------------------------
+- Root Next.js layout providing global document structure.
+- Injects Google Font (Inter).
+- Loads the external Razorpay Checkout SDK script:
+  https://checkout.razorpay.com/v1/checkout.js.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/app/globals.css
+--------------------------------------------------------------------------------
+- Global Tailwind CSS directives and custom styling.
+- Configures dark mode backgrounds (#111111), sleek glassmorphism, and custom scrollbars.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/components/ChessApp.tsx
+--------------------------------------------------------------------------------
+- The core controller of the frontend application.
+- Master State Management:
+  * Manages gameId, board FEN, turn, playerColor, warningActive, history, and bot status.
+  * Controls audio toggles (coachVoiceActive, roastModeActive).
+  * Learner Mode state: toggles dynamic hint arrows.
+- Dynamic Safe Arrows (1 to 3 Possibilities):
+  * When Learner Mode is active, computes up to 3 green suggestion arrows.
+  * Ensures all suggested moves are certified safe (cp_loss <= 40).
+  * If a position has 1 safe move, shows 1 arrow; if 2 or 3 safe moves exist, shows up to 3.
+  * Strictly suppresses hint arrows to the player's attempted blunder move.
+- Navigation Bar:
+  * Rating Slider: Throttles Stockfish robot opponent between 1320 and 3190 ELO.
+  * Side Selection: Toggles White/Black; flips board and triggers bot first move if Black.
+  * Full-Stack Undo: Calls POST /api/game/{id}/undo to pop the last move pair.
+- Seamless Payment Integration:
+  * Listens to AuthForm onAuthenticated callback.
+  * Transitions new registrations directly into the Razorpay checkout overlay.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/components/ChessBoardArea.tsx
+--------------------------------------------------------------------------------
+- Renders the responsive 8x8 chessboard grid scaled up to 85vh.
+- Integrates react-chessboard with smooth 150ms piece movement animations.
+- Visual Feedback Overlays:
+  * Green Target Dots: Renders valid destination squares on piece selection.
+  * Solid Red Square: Highlights destination square on mistakes and blunders.
+  * Orange-Red Pulse: Highlights illegal and pinned moves.
+  * Custom SVG Arrows: Renders green safe suggestions and red threat refutation arrows.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/components/BoardThemeSelector.tsx
+--------------------------------------------------------------------------------
+- Theme palette picker located cleanly beside the bottom-left rook.
+- Allows switching between 5 curated themes:
+  1. Classic Wood
+  2. Midnight Blue
+  3. Emerald Green
+  4. Coral
+  5. Obsidian
+- Saves selected theme in localStorage for persistent styling across reloads.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/components/CoachOverlay.tsx
+--------------------------------------------------------------------------------
+- Pre-commit decision card rendered when a player makes a bad move.
+- Provides 3 standardized actions:
+  1. Hint Box: Highlights the starting square of the engine's best move.
+  2. Play Anyway: Overrides the coach warning, commits the move, and triggers bot reply.
+  3. Show Follow Up Moves: Animates the opponent's punishment refutation line on the board,
+     highlights threats in blue, speaks audio warnings, and snaps back to position.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/components/CoachPanel.tsx
+--------------------------------------------------------------------------------
+- Side panel containing the AI coach avatar, dynamic status text, and evaluation metrics.
+- Displays live subtitles synchronized with audio playback.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/components/MoveLog.tsx
+--------------------------------------------------------------------------------
+- Scrollable move history list translated into human-readable English.
+- Displays colored classification badges:
+  * Book, Brilliant, Best Move, Excellent, Good, Inaccuracy, Mistake, Blunder, Worst Move.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/components/ProfileDropdown.tsx
+--------------------------------------------------------------------------------
+- Glassmorphic (#111) user profile modal.
+- Key Metrics Dashboard:
+  * Performance Rating: Dynamic rating derived from Average Centipawn Loss.
+  * Win Rate: Real-time win percentage computed from completed matches.
+  * Total Games: Played match counter with finished/active breakdown.
+- Recent Games List:
+  * Displays up to the top 7 played matches with interactive mini-chessboard thumbnails.
+  * Allows one-click continuation of active matches.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/components/ProfileEditModal.tsx
+--------------------------------------------------------------------------------
+- Profile editing interface.
+- Name editor with length validation.
+- 4-digit Birth Year input field for age verification.
+- Photo upload with automatic client-side compression to base64 JPEG under 256px.
+- Avatar picker featuring 12 vector SVG chess pieces.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/components/StatisticsModal.tsx
+--------------------------------------------------------------------------------
+- Analytics modal powered by Recharts (^3.10.1).
+- Renders responsive vector SVG line charts showing rating progression over matches.
+- Includes interactive tooltips with match index, opponent rating, and game result.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/components/PaymentOverlay.tsx
+--------------------------------------------------------------------------------
+- Premium paywall modal.
+- Invokes Razorpay checkout for INR 1.00.
+- On successful payment, updates global is_premium state and unlocks unlimited gameplay.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/components/TrialTimer.tsx
+--------------------------------------------------------------------------------
+- 3-minute guest countdown timer.
+- Warns unauthenticated players before the trial ends, locking the board upon expiry.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/components/SpeechBubble.tsx
+--------------------------------------------------------------------------------
+- Floating dialogue balloon displaying the current spoken coach subtitles.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/components/RoastAgeGateModal.tsx
+--------------------------------------------------------------------------------
+- Age advisory modal. Warns users under 18 before enabling unfiltered Roast Mode.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/components/AuthForm.tsx
+--------------------------------------------------------------------------------
+- Handles user registration, login, and Google OAuth via Supabase.
+- Collects 4-digit birth year without deterrence labels.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/data/roastDialogues.ts
+--------------------------------------------------------------------------------
+- 18+ Uncensored savage commentary matrix.
+- Short, punchy, aggressive lines (3 to 8 words) with zero emojis.
+- Non-Repeating Shuffle Engine:
+  * Tracks used lines in an in-memory session buffer.
+  * Guarantees no duplicate line plays until all lines in that category have been used.
+- Categories:
+  * MAJOR_BLUNDERS, MISTAKES, INACCURACIES, GOOD_MOVES, PRE_MOVE_WARNINGS,
+    UNDO_MOVE, CHECKMATE_ROBOT_WINS, CHECKMATE_PLAYER_WINS, STALEMATE, SLOW_PLAY.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/services/api.ts
+--------------------------------------------------------------------------------
+- REST API client communicating with FastAPI backend endpoints.
+- Implements 3-retry startup resilience to ensure stable server connection.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/utils/soundEffects.ts
+--------------------------------------------------------------------------------
+- Core audio synthesis and TTS engine.
+- Contains ChessSoundEngine (Web Audio API synthesizer).
+- Contains speakCoachMessage() (Web Speech API TTS controller).
+- Dispatches 'coach-subtitle' window events for real-time subtitle display.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/utils/coachVoice.ts
+--------------------------------------------------------------------------------
+- High-level voice dispatcher:
+  * Plays pre-recorded MP3 audio files for standard move classifications.
+  * Speaks dynamic piece threat warnings via Web Speech API.
+  * Routes to speakRoastMoveCategory() when Roast Mode is enabled.
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/utils/chessTranslator.ts
+--------------------------------------------------------------------------------
+- Converts SAN notation into descriptive English (e.g. "Knight jumps to f3").
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/utils/avatarUtils.tsx
+--------------------------------------------------------------------------------
+- 12 pure vector SVG piece definitions (Pawns, Knights, Bishops, Rooks, Queens, Kings).
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/utils/useSession.ts
+--------------------------------------------------------------------------------
+- Multi-tier profile persistence hook (Supabase Auth metadata + Postgres + LocalStorage).
+- Exempts developer/admin accounts (janhavikolekar280@gmail.com).
+
+--------------------------------------------------------------------------------
+FILE: Frontend/src/utils/supabaseClient.ts
+--------------------------------------------------------------------------------
+- Initializes Supabase browser client with public URL and anon key.
+
+
+--------------------------------------------------------------------------------
+3. SOUND ARCHITECTURE: WHERE SOUNDS ARE STORED & HOW THEY WORK
+--------------------------------------------------------------------------------
+
+The sound system is structured across 3 distinct tiers:
+
+TIER 1: SYNTHESIZED WOODEN BOARD SOUNDS (Zero External Files)
+- Location in Code: Frontend/src/utils/soundEffects.ts (ChessSoundEngine)
+- Technology: Native Web Audio API (AudioContext)
+- How It Works:
+  * Generates physical wooden board sound effects on the fly using oscillators and gain envelopes.
+  * Piece Movement: playMove() triggers a triangle oscillator at 340Hz decaying to 110Hz in 65ms.
+  * Piece Capture: playCapture() triggers a sine oscillator (480Hz -> 75Hz) and a triangle oscillator
+    (240Hz -> 50Hz) producing a deep double wood knock.
+
+TIER 2: PRE-RECORDED MP3 AUDIO FILES (Static Assets)
+- Storage Location on Disk: Frontend/public/Chess_Project_Voices/
+- Playback Mechanism: Loaded via new Audio('/Chess_Project_Voices/<file>.mp3') in coachVoice.ts.
+- Audio File Inventory:
+  1. "Good move.mp3"               -> Played on Good and Best moves.
+  2. "Book.mp3"                    -> Played on Opening Book moves.
+  3. "That's a slight inaccuracy.mp3" -> Played on Inaccuracy moves (CP loss 41-90).
+  4. "Hold on, that's a mistake...mp3" -> Played on Mistake moves (CP loss 91-180).
+  5. "That's a blunder..mp3"       -> Played on Blunder moves (CP loss 181-350).
+  6. "That's a serious blunder..mp3" -> Played on Worst Moves (CP loss > 350).
+  7. "Watch out! Here is their plan..mp3" -> Played when clicking "Show Follow Up Moves".
+  8. "win.mp3"                     -> Played when checkmating the opponent.
+  9. "move.mp3"                   -> Alternative move tap sound.
+
+TIER 3: LIVE SPOKEN VOICE VIA WEB SPEECH API (TTS)
+- Location in Code: Frontend/src/utils/soundEffects.ts (speakCoachMessage)
+- Technology: window.speechSynthesis & SpeechSynthesisUtterance
+- Voice Selection: Automatically prioritizes natural English male voices (David, Mark, Guy, Google US English).
+- Subtitle Sync: Dispatches 'coach-subtitle' custom events to render text in SpeechBubble.tsx.
+- Use Cases:
+  * Dynamic Refutation Warnings: Analyzes engine refutation and speaks:
+    "Watch out! You will lose your Queen if you make this move."
+  * 18+ Savage Roast Mode: Delivers short, punchy, uncensored trash-talk lines from roastDialogues.ts.
+  * Rating & Game Mode Announcements: "Club Player Mode, Rating 1500."
+
+
+--------------------------------------------------------------------------------
+4. END-TO-END MOVE-TO-VOICE LOGIC PIPELINE (HOW BLUNDERS TRIGGER AUDIO)
+--------------------------------------------------------------------------------
+
+Here is the exact step-by-step lifecycle from piece drop to spoken voice:
+
+1. Piece Dropped on Board:
+   - User drags or clicks a move in ChessBoardArea.tsx.
+   - Triggers handlePieceDrop() in ChessApp.tsx.
+
+2. Pre-Check Request to Backend:
+   - ChessApp.tsx sends POST /api/move/precheck with { game_id, move_uci }.
+   - Backend evaluates centipawn loss and returns:
+     { label: "Blunder", cp_loss: 240, refutation_sequence: ["e7e5", "d1h5", ...], threat_preview: "..." }
+
+3. Board State & Overlay Activation:
+   - ChessApp.tsx inspects the label:
+     * If label is "Mistake", "Blunder", or "Worst Move":
+       - Sets warningActive = true.
+       - Highlights the blunder's destination square in SOLID RED (badMoveSquare).
+       - Mounts the pre-commit CoachOverlay.tsx card over the board.
+
+4. Voice Engine Decision Tree:
+   - ChessApp.tsx checks audio settings:
+     * Case A: Roast Mode is ACTIVE (roastModeActive === true):
+       - Calls speakRoastPreMoveWarning() in coachVoice.ts.
+       - coachVoice.ts requests an uncensored line from roastDialogues.ts via the non-repeating
+         shuffle buffer (e.g., "What the fuck was that?", "Delete the fucking game, clown.").
+       - speakCoachMessage() speaks the line live via window.speechSynthesis (Web Speech API).
+       - Dispatches a 'coach-subtitle' event to render the text simultaneously in SpeechBubble.tsx.
+     * Case B: Standard Coach Voice is ACTIVE (coachVoiceActive === true):
+       - Calls speakMoveCategory("Blunder") in coachVoice.ts.
+       - coachVoice.ts looks up AUDIO_FILES["Blunder"] -> "/Chess_Project_Voices/That's a blunder..mp3".
+       - Plays the pre-recorded MP3 file at full volume via new Audio().
+       - Dispatches "That's a blunder." subtitle to SpeechBubble.tsx.
+
+5. "Show Follow Up Moves" Clicked:
+   - If the user clicks 🛡️ "Show Follow Up Moves" on CoachOverlay.tsx:
+     - The engine refutation moves animate on the board.
+     - The opponent threatening piece is highlighted in blue.
+     - speakDynamicRefutation() parses the captured pieces:
+       * If user loses a Queen/Rook: speaks live via TTS "Watch out! You will lose your [Piece]..."
+       * Fallback plays: "Watch out! Here is their plan..mp3".
+
+
+--------------------------------------------------------------------------------
+5. HINT BOX LOCATION & BEHAVIOR
+--------------------------------------------------------------------------------
+
+- Where is it defined?
+  Frontend/src/components/CoachOverlay.tsx (lines 53-65).
+- When does it appear?
+  Inside the floating pre-commit decision card whenever a player makes a bad move
+  (Inaccuracy, Mistake, Blunder, or Worst Move, when warningActive === true).
+- Button Rendering:
+  <button onClick={onHintClick} className="...">💡 Hint Box</button>
+- What happens when clicked:
+  1. Calls onHintClick() passed from ChessApp.tsx.
+  2. Sets showHint = true in ChessApp.tsx state.
+  3. ChessBoardArea.tsx receives hintSquare (the starting square of Stockfish's #1 top move).
+  4. Renders a prominent green square highlight on that piece, showing the learner which
+     piece they ought to move instead.
+
+
+--------------------------------------------------------------------------------
+6. BOARD THEME PALETTE LOCATION & BEHAVIOR
+--------------------------------------------------------------------------------
+
+- Where is it defined?
+  Frontend/src/components/BoardThemeSelector.tsx.
+- Where is it rendered?
+  Inside Frontend/src/components/ChessBoardArea.tsx (line 143).
+- Exact Screen Position:
+  Anchored using absolute CSS classes: "absolute -left-12 bottom-0 z-20".
+  Visually on the screen, it sits DIRECTLY BESIDE THE WHITE ROOK at the bottom-left corner
+  of the 8x8 chessboard grid.
+- Button Appearance:
+  A circular theme button with a Lucide Palette icon (<Palette className="w-5 h-5" />).
+- How it works:
+  1. Clicking it opens a popup palette drawer with 5 custom color swatches:
+     - Classic Wood (#d18b47 / #ffce9e)
+     - Midnight Blue (#2c3e50 / #bdc3c7)
+     - Emerald Green (#2e7d32 / #a5d6a7)
+     - Coral (#c0392b / #f1948a)
+     - Obsidian (#1f2937 / #4b5563)
+  2. Selecting a theme immediately recolors the 8x8 grid without page reloads.
+  3. Automatically saves the selected theme string in the browser's localStorage
+     ("smartchess_board_theme"), ensuring it persists across browser sessions.
+
+
+--------------------------------------------------------------------------------
+7. PUZZLES ON THE FRONTEND (CLIENT-SIDE EXECUTION)
+--------------------------------------------------------------------------------
+
+- Handled in: Frontend/src/components/ChessApp.tsx.
+- State Variables:
+  * isPuzzleMode (boolean): Toggles board into puzzle solving layout.
+  * puzzleData (object): Holds current puzzle ID, FEN, moves sequence, and rating.
+  * puzzleMoveIndex (number): Tracks current turn within multi-move tactical combinations.
+- API Client Integration (Frontend/src/services/api.ts):
+  * api.startPuzzle(tier): Calls POST /api/puzzles/start to fetch a new tactical puzzle.
+  * api.attemptPuzzleMove(puzzleId, moveUci): Calls POST /api/puzzles/attempt to verify move.
+- Audio & UI Feedback:
+  * speakPuzzleStartAnnouncement("White"/"Black"): Informs user which color to play.
+  * Solved State: Plays victory sound (win.mp3) and displays congratulatory modal.
+  * Failed Attempt: Alerts player that the move is incorrect, highlights square, and allows retry.
+
+================================================================================

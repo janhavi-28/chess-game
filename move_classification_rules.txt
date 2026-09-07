@@ -9,14 +9,14 @@ Here is how many points of advantage you are allowed to lose for a move to fall 
 * Brilliant (!!): 0 points lost (Must be the absolute #1 best move AND involve a sacrifice).
 * Best Move: 0 points lost (The absolute #1 best move without a sacrifice).
 * Excellent: 0 to 10 points lost (Practically as good as the Best Move).
-* Good: 11 to 25 points lost (A fine move, but slightly noticeably worse than the top choice).
+* Good: Loss under 40 points (A sound, solid move maintaining positional balance).
 * Book: 0 points lost (A recognized standard opening move).
 
 [The Bad Moves]
-* Inaccuracy: 26 to 60 points lost (Gives up about half a pawn's worth of advantage).
-* Mistake: 61 to 150 points lost (Gives up about 1 full pawn's worth of advantage).
-* Blunder: 151 to 300 points lost (Gives up 2 to 3 pawns, usually hanging a piece).
-* Worst Move: More than 300 points lost (A catastrophic move, like hanging your Queen or walking into checkmate).
+* Inaccuracy: 41 to 90 points lost (Gives up minor positional initiative, under 90 points).
+* Mistake: 91 to 180 points lost (Gives up about 1 to 1.5 pawns' worth of advantage, under 180 points).
+* Blunder: 181 to 350 points lost (Gives up 2 to 3+ pawns, hangs a piece or critical tactic, under 350 points).
+* Worst Move: More than 350 points lost (A catastrophic blunder, like hanging your Queen or walking into checkmate).
 
 
 --- NEW "MAIN BRAIN" RULES FOR TOP-TIER MOVES ---

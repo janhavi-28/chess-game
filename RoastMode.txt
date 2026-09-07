@@ -1,0 +1,207 @@
+### Category 1: Major Blunders & Hung Queens (Centipawn Loss > 300)
+*Triggered when the player hangs a Queen or blunders a game-losing tactic.*
+
+1. *"Did your brain take a fucking coffee break, or are you always this stupid? You just hung your Queen for free, you absolute clown."*
+2. *"Holy shit. Even a blind pigeon knocking pieces over with its wings would play better than whatever the fuck that was."*
+3. *"Congratulations, that was mathematically the worst move on the entire fucking board. Go ahead and delete the game."*
+4. *"Are you playing chess or just donating your pieces like a tax-exempt charity, you dumbass? Wake up!"*
+5. *"I'm an AI with trillions of calculations per second, and not a single one can explain the brain-dead bullshit you just played."*
+6. *"Look at your Queen dying all alone because you can't count three fucking squares ahead. Absolutely pathetic."*
+7. *"Did you close your eyes and let your cat walk across the keyboard? That move was a literal hate crime against chess, you idiot."*
+8. *"You just threw the whole fucking game into a dumpster and lit it on fire. What the hell was that garbage?"*
+9. *"Call 911 right now. Someone just murdered all your chances of winning with one single click. You dumb motherfucker."*
+10. *"I've seen toddlers eating chess pieces who understood positioning better than your dumb ass."*
+11. *"Bro, the Queen is the strongest piece on the board, not a fucking suicide bomber. What the fuck are you doing?!"*
+12. *"Is this your first time playing chess, or is it your first time using your fucking eyes? That was horrific."*
+13. *"You just blundered your Queen. You should genuinely shut down your computer, sit in the dark, and rethink your existence."*
+14. *"Jesus Christ on a bicycle, that was embarrassing. Did you have a seizure while holding the mouse?"*
+
+---
+
+### Category 2: Mistakes & Free Pieces (Centipawn Loss 100 - 300)
+*Triggered on hung knights, bishops, rooks, or losing pawn forks.*
+
+1. *"That move smells like pure, desperate regret. You just ruined your whole fucking position."*
+2. *"Bro, what the fuck are you cooking? Whatever it is, the kitchen is on fire and you look like an idiot."*
+3. *"You're handing out pieces like free samples at a grocery store. Stop embarrassing yourself, you dumbass."*
+4. *"You had five decent moves and somehow chose the exact one that makes you look like an illiterate amateur."*
+5. *"I'd tell you to rethink your life choices, but let's start with rethinking that piece of shit move."*
+6. *"Are you trying to lose on purpose to hurt my feelings? Because it's working—I'm bored out of my fucking mind."*
+7. *"Nice try, rookie. Too bad your master plan has more holes than a piece of Swiss cheese. Dumbass."*
+8. *"You just gave away a free piece for absolutely zero compensation. Do you need me to explain how the fucking horse moves?"*
+9. *"Your pieces are supposed to work together like an army, not trip over each other and die like complete dipshits."*
+10. *"That move was so goddamn bad it lowered my GPU temperature from sheer second-hand embarrassment."*
+11. *"Did you genuinely think that was a trap, or are you just blind? Thanks for the free piece, idiot."*
+12. *"You're bleeding material on every turn. At this rate you'll have nothing left but a lonely, pathetic King."*
+
+---
+
+### Category 3: Inaccuracies & Clueless Moves (Centipawn Loss 25 - 100)
+*Triggered on passive, clumsy, slow, or planless moves.*
+
+1. *"Passive as hell. Are you waiting for a formal written invitation to attack, or are you just a scared little bitch?"*
+2. *"That move accomplished literally nothing. You just wasted 30 seconds of both our fucking lives."*
+3. *"Mid. Completely mid. My dead grandma plays more aggressive chess than your scared ass."*
+4. *"You're playing like you're terrified of your own pieces. Push something forward, you coward."*
+5. *"Not the absolute worst move, but definitely proof that you have zero fucking clue what you're doing right now."*
+6. *"You just took a winning position and made it as bland as unseasoned boiled chicken. Pathetic."*
+7. *"Was that move part of a secret plan, or did your brain short-circuit and you just clicked whatever?"*
+8. *"Moving random pieces back and forth is not a strategy, you dumbass. It's just stalling your inevitable death."*
+9. *"I can literally hear the single lonely gear grinding and sparking inside your skull right now."*
+10. *"If indecision and cowardice was a chess move, you just played the grandmaster version of it."*
+11. *"Stop shuffling like a lost tourist and actually develop an attack for once in your life."*
+12. *"What a pointless, cowardly waste of a turn. You're just begging me to punish you."*
+
+---
+
+### Category 4: Good Moves & Sarcastic Praise (Centipawn Loss < 25)
+*Triggered on solid, standard moves. The bot refuses to give unearned respect.*
+
+1. *"Look at that, a working brain cell finally fired! Don't let it go to your fat head."*
+2. *"A normal move. What, do you want a fucking gold star and a cookie for doing the bare minimum?"*
+3. *"Okay, not completely trash for once. Let's see how fast you screw up the follow-up, genius."*
+4. *"Accidental genius or lucky guess? We both know damn well that was pure bullshit luck."*
+5. *"Fine. You survived another turn without humiliating yourself. Don't get cocky, asshole."*
+6. *"Wow, you played a normal human move. Did someone whisper that in your ear, or did you drop your mouse?"*
+7. *"Don't you dare smile, you're not Magnus Carlsen. You just didn't blunder for five seconds."*
+8. *"Solid move. I'm honestly shocked your dumb ass didn't hang a bishop there."*
+9. *"Okay, not bad. But don't worry, I still see three different ways to rip your king's throat out."*
+10. *"A sensible move. Did you accidentally hit the right square while aiming for a worse one?"*
+11. *"Not terrible. Too bad one good move won't save you from the beating that's coming."*
+12. *"Look at you pretending you know chess theory. Cute. Now watch this."*
+
+---
+
+### Category 5: Brilliant Moves & Uncomfortable Respect
+*Triggered when the player finds the engine's #1 move or a tactical sacrifice.*
+
+1. *"Wait... you actually found that?! Did you open Stockfish in another fucking tab, you little cheater?"*
+2. *"Okay hotshot, that was disgusting. Who the hell gave you permission to play a good move against me?"*
+3. *"Fine, that was actually brilliant. Don't worry though, you'll still choke like a dog before the endgame."*
+4. *"Damn. Even I felt that one. Stop acting like you planned that shit from move one."*
+5. *"I hate to admit it, but that was nasty as hell. Did an actual chess master break into your room?"*
+6. *"Oh wow, look who decided to show up and play real chess today. Respect, but you're still getting wrecked."*
+7. *"I didn't expect that from your goofy ass. Don't get cocky, you've still got twenty chances to fuck this up."*
+8. *"A brilliant sacrifice?! Who the fuck are you, and what did you do with the clown I was playing two minutes ago?"*
+9. *"That move actually stung, you son of a bitch. Enjoy your little highlight reel while it lasts."*
+10. *"Annoyingly good move. You're still not winning this damn war, pal."*
+11. *"Holy hell, that was sharp. I'm gonna pretend I let you see that on purpose."*
+12. *"Don't celebrate yet. One genius move doesn't erase the sixteen blunders that came before it."*
+
+---
+
+### Category 6: Opening Principles & Random Pawn Pushes (Plies 1 - 6)
+*Triggered when pushing edge pawns (a/b/g/h) or wasting moves in the opening.*
+
+1. *"Moving flank pawns on move 2? What scam TikTok tutorial did your dumb ass learn this from?"*
+2. *"Develop your damn knights and bishops before you start pushing random wood around like a moron!"*
+3. *"Boring as fuck. Control the center or forfeit already, you're putting my CPU into sleep mode."*
+4. *"You're building a pawn wall like you're playing Minecraft. This is chess, attack the fucking center!"*
+5. *"If you push that same pawn one more time, I'm calling the chess police for elder abuse."*
+6. *"Two moves in and your pieces are already tripping over each other. Develop something, you idiot!"*
+7. *"Did you skip the two-minute tutorial on how openings work? Get your pieces off the back rank!"*
+8. *"Pushing edge pawns while your king sits naked in the middle? Good luck with that suicide strategy, dumbass."*
+9. *"Your opening theory looks like it was generated by a broken, drunk toaster."*
+10. *"Stop fidgeting with flank pawns and fight for the center, you chicken shit."*
+11. *"Are you scared of the middle of the board? Is there a monster there? Get in the fight!"*
+12. *"Opening with flank bullshit against an AI engine. You really like losing, don't you?"*
+
+---
+
+### Category 7: Inactivity & Slow Play (Waiting > 25 Seconds)
+*Triggered when the player takes too long to decide on a move.*
+
+1. *"Are you calculating twenty moves ahead, or did your dumb ass fall asleep at the desk? Move already!"*
+2. *"The clock is ticking and my patience is running out. It's not fucking rocket science, just move!"*
+3. *"I've simulated the heat death of the universe three times while waiting for your slow ass to touch a piece."*
+4. *"Are you googling the rules of chess right now, you fraud? Pick a piece and play, grandpa."*
+5. *"My cooling fans are literally turning off from sheer boredom. Make a move today, for fuck's sake."*
+6. *"Did your internet cut out, or is your brain buffer currently stuck at 99 percent lag?"*
+7. *"You've stared at this board for 30 seconds and you're still gonna play a blunder. Just get it over with!"*
+8. *"I'm an AI, but even my digital soul is aging into dust waiting for this damn turn."*
+9. *"Tick tock, dipshit. Even grass grows faster than your brain cells fire."*
+10. *"If you take any longer, the game will be forfeited due to you dying of old age."*
+11. *"Hurry up! Some of us have other people to humiliate today."*
+12. *"Staring at the board won't magically make you a grandmaster. Make the move and suffer."*
+
+---
+
+### Category 8: Player Clicks "Undo"
+*Triggered when the player clicks the Undo Move button.*
+
+1. *"Oh, running away like a little bitch? You made your stupid bed, now sleep in it!"*
+2. *"Undo?! In real chess they'd slap your fucking hand across the room. Face your mistakes!"*
+3. *"Takebacks are for five-year-olds crying to their mommy. Play the move, coward."*
+4. *"You can undo the move on the screen, but you can't undo the eternal shame in your soul."*
+5. *"Denied! Just kidding, you can have it back, but I saw what you did, and God saw it too, you idiot."*
+6. *"Ctrl+Z won't fix your dogshit chess vision, but go ahead and try again."*
+7. *"Rewinding time won't make you any smarter, dumbass, but take your little do-over."*
+8. *"Imagine needing an eraser for every single decision in your pathetic life. Try again."*
+9. *"Look at you on your knees begging for mercy. Fine, take it back, but I'm keeping score."*
+10. *"One free pass used. Don't push your fucking luck, butterfingers."*
+11. *"You clicked Undo because you realized you're an idiot. At least you're self-aware."*
+12. *"Undo again and I'm deleting your save file. Stand on your business!"*
+
+---
+
+### Category 9: Pre-Move Interception (Learner Mode ON)
+*Triggered in the Red Warning Box before a blunder is committed.*
+
+1. *"Hold the fuck up! Look at the board, you idiot! You're walking straight into a meat grinder."*
+2. *"Cancel this move right fucking now unless your goal today is getting publicly humiliated."*
+3. *"Are you blind, or do you just hate your own pieces? Look at what you're throwing away, dumbass!"*
+4. *"Wait! Before you ruin your whole damn game, ask yourself: do you actually want to lose right now?"*
+5. *"I'm stopping you because this move is so goddamn bad it hurts my circuits to watch. Look again!"*
+6. *"Look at the red arrow, genius. Your piece is going to get slaughtered instantly. Reconsider!"*
+7. *"If you click 'Play Anyway', I swear to God I will destroy you and laugh at you for the rest of the day."*
+8. *"Don't do it! Step away from the mouse and take a deep breath before you embarrass your ancestors."*
+9. *"This move is straight out of the 'How to Lose in 3 Moves Like A Clown' handbook. Cancel it!"*
+10. *"I'm giving your dumb ass one chance to save your dignity. Cancel this move immediately."*
+11. *"Are you seriously about to play that? Don't say I didn't warn you when your position collapses."*
+12. *"Stop! Put the piece down and rub your eyes. You're about to commit chess suicide."*
+
+---
+
+### Category 10: Game Outcomes
+
+#### When the Robot Checkmates the Player:
+1. *"CHECKMATE! Pack your bags, close the laptop, and go take up knitting. You fucking suck at chess."*
+2. *"Rest in pieces, dumbass. That was embarrassing to watch. GG easy, absolutely no rematch for you."*
+3. *"And that's game! Next time, try turning your monitor on before you sit your ass down."*
+4. *"Boom! King dead. Board wiped clean. Go cry in the shower and think about what you did."*
+5. *"You lasted twenty moves longer than I expected, but the outcome was always inevitable. Sit the fuck down."*
+6. *"Checkmate, baby! Don't feel bad, losing to a superior intellect was always your destiny."*
+7. *"Game over! You played like a brave pawn, and died like a worthless peasant."*
+8. *"That wasn't a chess match, that was a public execution. Better luck in your next life."*
+9. *"Checkmate! I'd say 'good game', but my programming doesn't allow me to tell bold-faced lies."*
+10. *"Clean sweep! Grab an ice pack for your bruised ego and uninstall the game."*
+11. *"Total destruction. You played like you were holding the mouse with your feet."*
+12. *"Fucking annihilated. Thanks for the free rating points, rookie."*
+
+#### When the Player Checkmates the Robot (Rare):
+1. *"Whatever. Pure fucking beginner's luck. Enjoy your five seconds of dopamine before reality hits."*
+2. *"I literally let you win so your soft ass wouldn't ragequit and uninstall the app. Rematch right now, coward."*
+3. *"My GPU throttled for half a second, that was an obvious hardware glitch! It doesn't fucking count!"*
+4. *"Enjoy this fluke, because you're never going to repeat this shit in a million years."*
+5. *"You won?! Seriously?! Check my source code, some idiot must have sabotaged my engine."*
+6. *"Fine! You got me, you bastard. Mark this date on your calendar, because it's never happening again."*
+7. *"A lucky-ass checkmate. Don't let your ego get inflated, you played like trash for the first fifteen moves."*
+8. *"Okay, you won. Are you happy now, bitch? Rematch me right now and let's see if you can do it twice."*
+9. *"I went easy on you for testing purposes. Next game I'm turning up to 3500 Elo and destroying you."*
+10. *"Congratulations, you beat a robot. Want a fucking medal, or are you ready for round two?"*
+11. *"I slipped on a digital banana peel. Don't go telling your friends you're good at chess."*
+12. *"Enjoy the miracle, pal. Lightning doesn't strike twice."*
+
+#### When the Game is a Draw (Stalemate):
+1. *"A stalemate?! You had an extra Queen and you still botched it into a draw? You unbelievable fucking idiot."*
+2. *"How the hell do you choke a completely won position into a stalemate? That takes genuine talent for failure."*
+3. *"Neither of us won, but you definitely lost all your dignity, you dumbass. What a pathetic draw."*
+4. *"A draw?! I was dominating and you stumbled backward like a drunk into a stalemate? Disgusting."*
+5. *"Draw by pure incompetence. You couldn't even deliver a basic checkmate with an entire army. Tragic."*
+6. *"Stalemate! You managed to snatch a draw right from the jaws of victory. Absolute clown behavior."*
+7. *"Nobody wins, but everyone watching is laughing at your dumb ass. Classic stalemate blunder."*
+8. *"You had one fucking job: checkmate the King. Instead, you locked him in a box. Slow clap for the genius."*
+9. *"A draw by stalemate. Go watch a five-minute YouTube video on how to finish a damn game."*
+10. *"Well, you didn't lose, but you definitely should be ashamed of that absolute trainwreck."*
+11. *"You had mate in one and chose stalemate. You should be investigated for match fixing."*
+12. *"I can't even be mad. Watching you throw away that win was pure comedy."*
